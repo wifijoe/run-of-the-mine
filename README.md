@@ -1,5 +1,11 @@
 # Phaser Vite TypeScript Template
 
+### Ash added thoughts
+Most of this information is good to know, but I will be handling `npm run build` automatically and will likely have this set up in the next few weeks. Don't worry about building things for now. Phaser documentation can be found at [this site](https://docs.phaser.io/phaser/getting-started/what-is-phaser). All of the documentation is currently relevant, though it is in javascript, so there will be some small code differences. I will be working on getting the jest framework ready to go and figure out the best way to set up testing during that time also.
+
+### Git note
+When you are making your own changes to the code, make sure you make a new branch with Git off of the dev branch. This will make code organization much more simple for everyone. When you are ready to add your code to the dev branch, make sure all test cases pass (I'll get that automated soon) and then make a pull request for it. Ping me on discord and I will merge it with the dev branch as soon as I can.
+
 This is a Phaser 3 project template that uses Vite for bundling. It supports hot-reloading for quick development workflow, includes TypeScript support and scripts to generate production-ready builds.
 
 ### Versions

@@ -34,6 +34,66 @@ class GameBoard extends Phaser.GameObjects.Grid {
         );
       }
     }
+
+    this.placeMines();
+    this.calculateAdjacentMines();
+  }
+
+  /**
+   * Places mines on the game board
+   * @param startX x coordinate of the starting cell
+   * @param startY y coordinate of the starting cell
+   * @param mineDensity density of mines on the board
+   */
+  placeMines(
+    startX: number = this.width - 1,
+    startY: number = Math.floor(this.height / 2),
+    mineDensity: number = 0.15
+  ) {
+    this.numberOfMines = this.width * this.height * mineDensity;
+    let minesPlaced = 0;
+
+    while (minesPlaced < this.numberOfMines) {
+      const x = Math.floor(Math.random() * this.width);
+      const y = Math.floor(Math.random() * this.height);
+
+      // Check if current position is the start position or adjacent to it
+      if (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1) {
+        continue;
+      }
+
+      if (this.grid[x][y].contains === CellContent.EMPTY) {
+        this.grid[x][y].contains = CellContent.HAZARD;
+        minesPlaced++;
+      }
+    }
+  }
+
+  /**
+   * Calculates the number of adjacent mines for each cell
+   */
+  calculateAdjacentMines() {
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.height; j++) {
+        const cell = this.grid[i][j];
+        if (cell.contains === CellContent.HAZARD) {
+          continue;
+        }
+
+        let adjacentMines = 0;
+        for (let x = i - 1; x <= i + 1; x++) {
+          for (let y = j - 1; y <= j + 1; y++) {
+            if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+              continue;
+            }
+            if (this.grid[x][y].contains === CellContent.HAZARD) {
+              adjacentMines++;
+            }
+          }
+        }
+        cell.adjacentMines = adjacentMines;
+      }
+    }
   }
 
   /**

@@ -1,6 +1,10 @@
-class GameBoard extends Phaser.GameObjects.Grid {
+class GameBoard extends Phaser.GameObjects.Container {
   grid: Cell[][];
   numberOfMines: number;
+  cellWidth: number;
+  cellHeight: number;
+  boardWidth: number;
+  boardHeight: number;
 
   constructor(
     scene: Phaser.Scene,
@@ -12,27 +16,62 @@ class GameBoard extends Phaser.GameObjects.Grid {
     cellHeight: number,
     numberOfMines: number = 0
   ) {
-    super(scene, x, y, width, height, cellWidth, cellHeight);
+    super(scene, x, y);
     this.grid = [];
-    this.numberOfMines = numberOfMines;
-    this.generateBoard();
+    this.numberOfMines = 0;
+    this.cellWidth = cellWidth;
+    this.cellHeight = cellHeight;
+    this.boardWidth = width;
+    this.boardHeight = height;
+
+    this.generateBoard(cellWidth, cellHeight, width, height);
+
+    this.setSize(width * cellWidth, height * cellHeight);
+    this.setInteractive();
+
+    // Handle click events on the board
+    this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      console.log("Pointer down on board", pointer);
+      this.handlePointerDown(pointer);
+    });
+  }
+
+  /**
+   * Handles click events on the board
+   * @param pointer the pointer that was clicked
+   */
+  handlePointerDown(pointer: Phaser.Input.Pointer) {
+    const cellX = Math.floor(pointer.x / this.cellWidth);
+    const cellY = Math.floor(pointer.y / this.cellHeight);
+
+    // Ensure the click is within the board bounds
+    if (cellX >= 0 && cellX < this.width && cellY >= 0 && cellY < this.height) {
+      this.checkCell(cellX, cellY);
+    }
   }
 
   /**
    * Generates a new game board (populates this.grid with cells)
    */
-  generateBoard() {
-    for (let i = 0; i < this.width; i++) {
+  generateBoard(
+    cellWidth: number,
+    cellHeight: number,
+    width: number,
+    height: number
+  ) {
+    for (let i = 0; i < width; i++) {
       this.grid[i] = [];
-      for (let j = 0; j < this.height; j++) {
-        this.grid[i][j] = new Cell(
+      for (let j = 0; j < height; j++) {
+        const cell = new Cell(
           this.scene,
-          i * this.cellWidth,
-          j * this.cellHeight,
-          this.cellWidth,
-          this.cellHeight,
+          i * cellWidth,
+          j * cellHeight,
+          cellWidth,
+          cellHeight,
           CellContent.EMPTY
         );
+        this.grid[i][j] = cell;
+        this.add(cell); // Add cell to the container
       }
     }
 
@@ -128,6 +167,7 @@ class GameBoard extends Phaser.GameObjects.Grid {
       return;
     }
     cell.cellState = CellState.REVEALED;
+    cell.update();
     if (cell.adjacentMines === 0) {
       this.revealAdjacentCells(x - 1, y);
       this.revealAdjacentCells(x + 1, y);
@@ -154,6 +194,22 @@ class Cell extends Phaser.GameObjects.Rectangle {
     this.cellState = CellState.HIDDEN;
     this.contains = contains;
     this.adjacentMines = 0;
+
+    this.setFillStyle(0x808080); // Grey for hidden cells
+
+    this.setStrokeStyle(1, 0x000000); // Black border for all cells
+  }
+
+  update() {
+    if (this.cellState === CellState.REVEALED) {
+      if (this.contains === CellContent.HAZARD) {
+        this.setFillStyle(0xff0000);
+      } else if (this.contains === CellContent.EMPTY) {
+        this.setFillStyle(0xffffff);
+      }
+    } else if (this.cellState === CellState.FLAGGED) {
+      this.setFillStyle(0xffff00);
+    }
   }
 }
 

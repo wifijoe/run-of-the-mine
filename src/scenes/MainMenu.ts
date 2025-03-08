@@ -1,32 +1,42 @@
-import { Scene, GameObjects } from 'phaser';
+import { Scene } from "phaser";
+import Button from "../components/button";
 
-export class MainMenu extends Scene
-{
-    background: GameObjects.Image;
-    logo: GameObjects.Image;
-    title: GameObjects.Text;
+const ButtonUp = "button_up";
+const ButtonDown = "button_down";
 
-    constructor ()
-    {
-        super('MainMenu');
-    }
+export class MainMenu extends Scene {
+  camera: Phaser.Cameras.Scene2D.Camera;
+  background: Phaser.GameObjects.Image;
+  logo: Phaser.GameObjects.Image;
+  startButton: Button;
 
-    create ()
-    {
-        this.background = this.add.image(512, 384, 'background');
+  constructor() {
+    super("MainMenu");
+  }
 
-        this.logo = this.add.image(512, 300, 'logo');
+  preload() {
+    this.load.image(ButtonUp, "assets/startButton.png");
+    this.load.image(ButtonDown, "assets/startButtonDown.png");
+  }
 
-        this.title = this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
+  create() {
+    this.camera = this.cameras.main;
+    this.camera.setBackgroundColor(0x999999);
 
-        this.input.once('pointerdown', () => {
+    this.background = this.add.image(512, 384, "background");
+    this.background.setAlpha(0.5);
 
-            this.scene.start('Game');
+    this.logo = this.add.image(512, 384, "logo");
+    this.logo.setOrigin(0.5);
 
-        });
-    }
+    this.startButton = new Button(this, 512, 600, ButtonUp).setDownTexture(
+      ButtonDown
+    );
+    this.startButton.scale = 0.4;
+    this.add.existing(this.startButton);
+
+    this.startButton.on("pointerup", () => {
+      this.scene.start("Game");
+    });
+  }
 }

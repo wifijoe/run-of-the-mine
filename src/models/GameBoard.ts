@@ -9,11 +9,12 @@ class GameBoard extends Phaser.GameObjects.Grid {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    numberOfMines: number = 0
   ) {
     super(scene, x, y, width, height, cellWidth, cellHeight);
     this.grid = [];
-    this.numberOfMines = 0;
+    this.numberOfMines = numberOfMines;
     this.generateBoard();
   }
 
@@ -156,7 +157,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
   }
 }
 
-enum CellState {
+export enum CellState {
   HIDDEN,
   REVEALED,
   FLAGGED,

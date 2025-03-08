@@ -24,7 +24,7 @@ class GameBoard extends Phaser.GameObjects.Grid {
     for (let i = 0; i < this.width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < this.height; j++) {
-        this.grid[i][j] = new Cell(
+        const cell = new Cell(
           this.scene,
           i * this.cellWidth,
           j * this.cellHeight,
@@ -32,6 +32,8 @@ class GameBoard extends Phaser.GameObjects.Grid {
           this.cellHeight,
           CellContent.EMPTY
         );
+        this.grid[i][j] = cell;
+        this.scene.add.existing(cell);
       }
     }
 
@@ -153,6 +155,24 @@ class Cell extends Phaser.GameObjects.Rectangle {
     this.cellState = CellState.HIDDEN;
     this.contains = contains;
     this.adjacentMines = 0;
+
+    this.setFillStyle(0x808080); // Grey for hidden cells
+
+    this.setStrokeStyle(1, 0x000000);
+
+    this.setInteractive(); // Make the cell interactive
+    this.on("pointerdown", () => {
+      console.log("Cell clicked");
+      if (this.contains === CellContent.HAZARD) {
+        this.setFillStyle(0xff0000);
+        // Game over logic
+        console.log("Game over");
+      } else if (this.contains === CellContent.EMPTY) {
+        // Reveal adjacent cells logic
+        this.setFillStyle(0xffffff);
+        console.log("Reveal adjacent cells");
+      }
+    });
   }
 }
 

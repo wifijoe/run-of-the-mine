@@ -9,9 +9,16 @@ class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  preload() {
+    // Attribution: "Designed by 0melapics / Freepik"
+    this.load.image("dirt", "assets/dirt.jpg");
+  }
+
   create() {
     const cellSize = 32;
     const boardWidth = 20;
+
+    this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
       (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);

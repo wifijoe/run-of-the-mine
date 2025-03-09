@@ -97,17 +97,17 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param mineDensity density of mines on the board
    */
   placeMines(
-    startX: number = this.width - 1,
-    startY: number = Math.floor(this.height / 2),
+    startX: number = this.boardWidth - 1,
+    startY: number = Math.floor(this.boardHeight / 2),
     mineDensity: number = 0.15
   ) {
-    this.numberOfMines = this.width * this.height * mineDensity;
+    this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
     let minesPlaced = 0;
 
     while (minesPlaced < this.numberOfMines) {
       // We need an x and a y that are random and within the bounds of the board
-      const x = Math.floor(Math.random() * this.width);
-      const y = Math.floor(Math.random() * this.height);
+      const x = Math.floor(Math.random() * this.boardWidth);
+      const y = Math.floor(Math.random() * this.boardHeight);
 
       // Check if current position is the start position or adjacent to it
       if (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1) {
@@ -125,8 +125,8 @@ class GameBoard extends Phaser.GameObjects.Container {
    * Calculates the number of adjacent mines for each cell
    */
   calculateAdjacentMines() {
-    for (let i = 0; i < this.width; i++) {
-      for (let j = 0; j < this.height; j++) {
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
         const cell = this.grid[i][j];
         if (cell.contains === CellContent.HAZARD) {
           continue;
@@ -135,7 +135,12 @@ class GameBoard extends Phaser.GameObjects.Container {
         let adjacentMines = 0;
         for (let x = i - 1; x <= i + 1; x++) {
           for (let y = j - 1; y <= j + 1; y++) {
-            if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+            if (
+              x < 0 ||
+              x >= this.boardWidth ||
+              y < 0 ||
+              y >= this.boardHeight
+            ) {
               continue;
             }
             if (this.grid[x][y].contains === CellContent.HAZARD) {
@@ -175,7 +180,7 @@ class GameBoard extends Phaser.GameObjects.Container {
    */
   revealAdjacentCells(x: number, y: number) {
     // Check to make sure x and y are valid
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+    if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
       return;
     }
     const cell = this.grid[x][y];
@@ -190,6 +195,28 @@ class GameBoard extends Phaser.GameObjects.Container {
       this.revealAdjacentCells(x, y - 1);
       this.revealAdjacentCells(x, y + 1);
     }
+  }
+
+  /**
+   * Reveals all cells (the player selected a mine)
+   *
+   */
+  revealAllCells() {
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.grid[i][j].cellState = CellState.REVEALED;
+        this.grid[i][j].update();
+      }
+    }
+  }
+
+  loseGame() {
+    this.revealAllCells();
+    this.scene.add.text(20, 20, "You lose!", {
+      fontSize: "32px",
+      color: "#ff0000",
+    });
+    this.removeInteractive();
   }
 }
 
@@ -232,7 +259,14 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", () => {
-      this.board.checkCell(this.getGridX(), this.getGridY());
+      const cellContains = this.board.checkCell(
+        this.getGridX(),
+        this.getGridY()
+      );
+      if (cellContains === CellContent.HAZARD) {
+        this.cellState = CellState.REVEALED;
+        board.loseGame();
+      }
     });
   }
 

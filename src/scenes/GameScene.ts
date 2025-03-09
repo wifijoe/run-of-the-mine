@@ -3,6 +3,7 @@ import GameBoard from "../models/GameBoard";
 
 class GameScene extends Phaser.Scene {
   private gameBoard: GameBoard;
+  gameEndText: Phaser.GameObjects.Text;
 
   constructor() {
     super("GameScene");

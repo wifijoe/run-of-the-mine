@@ -13,8 +13,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number,
-    numberOfMines: number = 0
+    cellHeight: number
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -23,17 +22,20 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.cellHeight = cellHeight;
     this.boardWidth = width;
     this.boardHeight = height;
+    this.width = width;
+    this.height = height;
 
     this.generateBoard(cellWidth, cellHeight, width, height);
 
     this.setSize(width * cellWidth, height * cellHeight);
+
     this.setInteractive();
 
-    // Handle click events on the board
-    this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      console.log("Pointer down on board", pointer);
-      this.handlePointerDown(pointer);
-    });
+    // // Handle click events on the board
+    // this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+    //   console.log("Pointer down on board", pointer);
+    //   this.handlePointerDown(pointer);
+    // });
   }
 
   /**
@@ -41,11 +43,19 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param pointer the pointer that was clicked
    */
   handlePointerDown(pointer: Phaser.Input.Pointer) {
-    const cellX = Math.floor(pointer.x / this.cellWidth);
-    const cellY = Math.floor(pointer.y / this.cellHeight);
+    const localX = pointer.x - this.x;
+    const localY = pointer.y - this.y;
+
+    const cellX = Math.floor(localX / this.cellWidth);
+    const cellY = Math.floor(localY / this.cellHeight);
 
     // Ensure the click is within the board bounds
-    if (cellX >= 0 && cellX < this.width && cellY >= 0 && cellY < this.height) {
+    if (
+      cellX >= 0 &&
+      cellX < this.boardWidth &&
+      cellY >= 0 &&
+      cellY < this.boardHeight
+    ) {
       this.checkCell(cellX, cellY);
     }
   }
@@ -68,7 +78,8 @@ class GameBoard extends Phaser.GameObjects.Container {
           j * cellHeight,
           cellWidth,
           cellHeight,
-          CellContent.EMPTY
+          CellContent.EMPTY,
+          this
         );
         this.grid[i][j] = cell;
         this.add(cell); // Add cell to the container
@@ -94,6 +105,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     let minesPlaced = 0;
 
     while (minesPlaced < this.numberOfMines) {
+      // We need an x and a y that are random and within the bounds of the board
       const x = Math.floor(Math.random() * this.width);
       const y = Math.floor(Math.random() * this.height);
 
@@ -162,6 +174,10 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param y y coordinate of the cell
    */
   revealAdjacentCells(x: number, y: number) {
+    // Check to make sure x and y are valid
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+      return;
+    }
     const cell = this.grid[x][y];
     if (cell.cellState === CellState.REVEALED) {
       return;
@@ -181,6 +197,8 @@ class Cell extends Phaser.GameObjects.Rectangle {
   cellState: CellState;
   contains: CellContent;
   adjacentMines: number;
+  textOfCell: Phaser.GameObjects.Text;
+  board: GameBoard;
 
   constructor(
     scene: Phaser.Scene,
@@ -188,16 +206,43 @@ class Cell extends Phaser.GameObjects.Rectangle {
     y: number,
     width: number,
     height: number,
-    contains: CellContent
+    contains: CellContent,
+    board: GameBoard
   ) {
     super(scene, x, y, width, height);
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
     this.cellState = CellState.HIDDEN;
     this.contains = contains;
     this.adjacentMines = 0;
+    this.board = board;
 
     this.setFillStyle(0x808080); // Grey for hidden cells
 
-    this.setStrokeStyle(1, 0x000000); // Black border for all cells
+    this.setStrokeStyle(1, 0x000000);
+    // Black border for all cells
+
+    // Ensure the hit area is set correctly
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, width, height),
+      Phaser.Geom.Rectangle.Contains
+    );
+
+    // Add an event listener to detect clicks on this cell
+    this.on("pointerdown", () => {
+      this.board.checkCell(this.getGridX(), this.getGridY());
+    });
+  }
+
+  // Helper methods to get grid position
+  getGridX(): number {
+    return Math.floor(this.x / this.width);
+  }
+
+  getGridY(): number {
+    return Math.floor(this.y / this.height);
   }
 
   update() {
@@ -206,6 +251,23 @@ class Cell extends Phaser.GameObjects.Rectangle {
         this.setFillStyle(0xff0000);
       } else if (this.contains === CellContent.EMPTY) {
         this.setFillStyle(0xffffff);
+        if (this.adjacentMines > 0) {
+          if (!this.textOfCell) {
+            const bounds = this.getBounds(); // Get world bounds of the cell
+            this.textOfCell = this.scene.add.text(
+              bounds.centerX, // World X position
+              bounds.centerY, // World Y position
+              this.adjacentMines.toString(),
+              {
+                fontSize: "20px",
+                color: "#000000",
+              }
+            );
+
+            this.textOfCell.setOrigin(0.5); // Center the text inside the cell
+            this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
+          }
+        }
       }
     } else if (this.cellState === CellState.FLAGGED) {
       this.setFillStyle(0xffff00);

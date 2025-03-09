@@ -9,7 +9,23 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gameBoard = new GameBoard(this, 0, 0, 400, 400, 20, 20);
+    const cellSize = 32;
+    const boardWidth = 20;
+
+    const x =
+      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+    const y =
+      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
+
+    this.gameBoard = new GameBoard(
+      this,
+      x,
+      y,
+      boardWidth,
+      boardWidth,
+      cellSize,
+      cellSize
+    );
     this.add.existing(this.gameBoard);
   }
 }

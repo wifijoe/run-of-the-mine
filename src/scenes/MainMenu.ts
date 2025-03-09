@@ -36,7 +36,7 @@ export class MainMenu extends Scene {
     this.add.existing(this.startButton);
 
     this.startButton.on("pointerup", () => {
-      this.scene.start("Game");
+      this.scene.start("GameScene");
     });
   }
 }

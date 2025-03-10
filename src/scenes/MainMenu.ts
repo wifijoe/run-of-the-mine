@@ -3,10 +3,10 @@ import Button from "../components/button";
 
 const ButtonUp = "button_up";
 const ButtonDown = "button_down";
+const Background = "background";
 
 export class MainMenu extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
-  background: Phaser.GameObjects.Image;
   logo: Phaser.GameObjects.Image;
   startButton: Button;
 
@@ -17,14 +17,14 @@ export class MainMenu extends Scene {
   preload() {
     this.load.image(ButtonUp, "assets/startButton.png");
     this.load.image(ButtonDown, "assets/startButtonDown.png");
+    this.load.image(Background, 'assets/itsthe90s.png');
   }
 
   create() {
-    this.camera = this.cameras.main;
-    this.camera.setBackgroundColor(0x999999);
-
-    this.background = this.add.image(512, 384, "background");
-    this.background.setAlpha(0.5);
+    // background
+    this.add.image(0, 0, Background)
+    .setOrigin(0, 0)
+    .setDisplaySize(this.scale.width, this.scale.height);
 
     this.logo = this.add.image(512, 384, "logo");
     this.logo.setOrigin(0.5);

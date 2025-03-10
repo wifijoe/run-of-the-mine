@@ -1,5 +1,5 @@
-import { Scene } from "phaser";
-import GameBoard, { CellState } from "../models/GameBoard";
+import { Scene } from "phaser"; //this class is currently not used
+import GameBoard from "../models/GameBoard";
 
 export class Game extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;

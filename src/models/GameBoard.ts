@@ -212,7 +212,7 @@ class GameBoard extends Phaser.GameObjects.Container {
 
   loseGame() {
     this.revealAllCells();
-    this.scene.add.text(20, 20, "You lose!", {
+    this.scene.add.text(8, 120, "You lose!", {
       fontSize: "32px",
       color: "#ff0000",
     });

@@ -13,7 +13,9 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    startX: number,
+    startY: number
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -67,7 +69,9 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellWidth: number,
     cellHeight: number,
     width: number,
-    height: number
+    height: number,
+    startX: number = width - 1,
+    startY: number = Math.floor(height / 2)
   ) {
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
@@ -86,7 +90,7 @@ class GameBoard extends Phaser.GameObjects.Container {
       }
     }
 
-    this.placeMines();
+    this.placeMines(startX, startY);
     this.calculateAdjacentMines();
   }
 

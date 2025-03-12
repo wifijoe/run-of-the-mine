@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import GameBoard from "../models/GameBoard";
+import Level from "../models/Level";
 
 class GameScene extends Phaser.Scene {
-  private gameBoard: GameBoard;
+  private level: Level;
   gameEndText: Phaser.GameObjects.Text;
 
   score: number = 0;
@@ -39,7 +40,7 @@ class GameScene extends Phaser.Scene {
     const y =
       (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
 
-    this.gameBoard = new GameBoard(
+    this.level = new Level(
       this,
       x,
       y,
@@ -48,61 +49,68 @@ class GameScene extends Phaser.Scene {
       cellSize,
       cellSize
     );
-    this.add.existing(this.gameBoard);
+    this.add.existing(this.level.board);
+    this.level.startLevel(boardWidth - 1, Math.floor(boardWidth / 2));
+
+    //Not a clue why this will work here, but when called in generateBoard() it doesn't work
 
     // center
     const centerX = this.cameras.main.width / 2;
     //const centerY = this.cameras.main.height / 2;
 
     // title of game
-    this.add.text(40, 15, 'Run of the Mine', {
-        fontSize: '30px',
-        color: '#ffffff',
-        fontFamily: '"Orbitron", sans-serif'
+    this.add.text(40, 15, "Run of the Mine", {
+      fontSize: "30px",
+      color: "#ffffff",
+      fontFamily: '"Orbitron", sans-serif',
     });
 
     // game score, currently not synced with anything
-    this.scoreText = this.add.text((centerX*2)-40, 30, 'Score: 0', {
-        fontSize: '30px',
-        color: '#ffffff',
-        fontFamily: '"Orbitron", sans-serif'
-    }).setOrigin(1, 0);
+    this.scoreText = this.add
+      .text(centerX * 2 - 40, 30, "Score: 0", {
+        fontSize: "30px",
+        color: "#ffffff",
+        fontFamily: '"Orbitron", sans-serif',
+      })
+      .setOrigin(1, 0);
 
     // timer, currently not synced with anything
-    this.timerText = this.add.text((centerX*2)-40, 70, 'Time: 0s', {
-        fontSize: '30px',
-        color: '#ff0000',
-        fontFamily: '"Orbitron", sans-serif'
-    }).setOrigin(1, 0);
+    this.timerText = this.add
+      .text(centerX * 2 - 40, 70, "Time: 0s", {
+        fontSize: "30px",
+        color: "#ff0000",
+        fontFamily: '"Orbitron", sans-serif',
+      })
+      .setOrigin(1, 0);
 
     // timer functionality
     this.timerEvent = this.time.addEvent({
-        delay: 1000, // 1 second
-        callback: () => this.updateTimer(),
-        callbackScope: this,
-        loop: true
+      delay: 1000, // 1 second
+      callback: () => this.updateTimer(),
+      callbackScope: this,
+      loop: true,
     });
 
     // flags remaining display, currently not synced with anything
     this.flagText = this.add.text(40, 70, `Flags: ${this.remainingFlags}`, {
-        fontSize: '24px',
-        color: '#ffffff',
-        fontFamily: '"Orbitron", sans-serif',
+      fontSize: "24px",
+      color: "#ffffff",
+      fontFamily: '"Orbitron", sans-serif',
     });
   }
   updateScore(points: number) {
     this.score += points;
     this.scoreText.setText(`Score: ${this.score}`);
-}
+  }
 
-updateTimer() {
+  updateTimer() {
     this.elapsedTime++;
     this.timerText.setText(`Time: ${this.elapsedTime}s`);
-}
+  }
 
-levelCompleted() {
+  levelCompleted() {
     // reset board for new level
-}
+  }
 }
 
 export default GameScene;

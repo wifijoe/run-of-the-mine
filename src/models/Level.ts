@@ -29,7 +29,6 @@ class Level {
       startX,
       startY
     );
-    // this.board.revealAdjacentCells(startX, startY);
     this.playerPosition = [0, 0];
     this.timePlayed = 0;
     this.points = 0;
@@ -37,7 +36,7 @@ class Level {
   }
 
   startLevel(startX: number, startY: number) {
-    this.board.revealAdjacentCells(19, 10);
+    this.board.revealAdjacentCells(startX, startY);
   }
 }
 

@@ -56,6 +56,29 @@ class GameScene extends Phaser.Scene {
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
+
+    this.events.on("levelComplete", () => {
+      this.gameOver = true;
+      this.gameEndText = this.add.text(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        "You escaped! Press R to Restart",
+        {
+          fontSize: "32px",
+          color: "#000000",
+          fontFamily: '"Arial Black", Arial, sans-serif',
+          stroke: "#000000",
+          strokeThickness: 0.5,
+        }
+      );
+      this.gameEndText.setOrigin(0.5);
+      this.keydownListener = (event: KeyboardEvent) => {
+        if (event.key === "r" || event.key === "R") {
+          this.resetLevel();
+        }
+      };
+      this.input.keyboard?.on("keydown", this.keydownListener);
+    });
   }
 
   resetLevel() {
@@ -108,7 +131,7 @@ class GameScene extends Phaser.Scene {
       cellSize
     );
     this.add.existing(this.level.board);
-    this.level.startLevel(boardWidth - 1, Math.floor(boardWidth / 2));
+    this.level.startLevel(boardWidth - 2, Math.floor(boardWidth / 2) - 1);
 
     // Center
     const centerX = this.cameras.main.width / 2;

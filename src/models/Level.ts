@@ -15,8 +15,8 @@ class Level {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    startX: number = width - 1,
-    startY: number = Math.floor(height / 2)
+    startX: number = width - 2,
+    startY: number = Math.floor(height / 2) - 1
   ) {
     this.board = new GameBoard(
       scene,

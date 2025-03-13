@@ -52,8 +52,6 @@ class GameScene extends Phaser.Scene {
     this.add.existing(this.level.board);
     this.level.startLevel(boardWidth - 1, Math.floor(boardWidth / 2));
 
-    //Not a clue why this will work here, but when called in generateBoard() it doesn't work
-
     // center
     const centerX = this.cameras.main.width / 2;
     //const centerY = this.cameras.main.height / 2;

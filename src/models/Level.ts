@@ -36,7 +36,7 @@ class Level {
   }
 
   startLevel(startX: number, startY: number) {
-    this.board.revealAdjacentCells(19, 10);
+    this.board.revealAdjacentCells(startX, startY);
   }
 }
 

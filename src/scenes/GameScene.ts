@@ -1,10 +1,10 @@
 import Phaser from "phaser";
-import GameBoard from "../models/GameBoard";
 import Level from "../models/Level";
 
 class GameScene extends Phaser.Scene {
   private level: Level;
   gameEndText: Phaser.GameObjects.Text;
+  gameOver: boolean = false;
 
   score: number = 0;
   scoreText!: Phaser.GameObjects.Text;
@@ -20,6 +20,8 @@ class GameScene extends Phaser.Scene {
   modeText!: Phaser.GameObjects.Text;
   flagButton!: Phaser.GameObjects.Rectangle;
 
+  private keydownListener: (event: KeyboardEvent) => void;
+
   constructor() {
     super("GameScene");
   }
@@ -30,6 +32,62 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.resetLevel();
+
+    this.events.on("gameOver", () => {
+      this.gameOver = true;
+      this.gameEndText = this.add.text(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        "Game Over! Press R to Restart",
+        {
+          fontSize: "32px",
+          color: "#000000",
+          fontFamily: '"Arial Black", Arial, sans-serif',
+          stroke: "#000000",
+          strokeThickness: 0.5,
+        }
+      );
+      this.gameEndText.setOrigin(0.5);
+      this.keydownListener = (event: KeyboardEvent) => {
+        if (event.key === "r" || event.key === "R") {
+          this.resetLevel();
+        }
+      };
+      this.input.keyboard?.on("keydown", this.keydownListener);
+    });
+  }
+
+  resetLevel() {
+    this.gameOver = false;
+    if (this.level) {
+      this.level.board.destroy();
+    }
+
+    // Remove other game objects
+    if (this.gameEndText) {
+      this.gameEndText.destroy();
+    }
+
+    // Remove the event listener
+    this.input.keyboard?.off("keydown", this.keydownListener);
+
+    // Reset other game objects
+    if (this.scoreText) {
+      this.scoreText.setText("Score: 0");
+    }
+    if (this.timerText) {
+      this.timerText.setText("Time: 0s");
+      this.elapsedTime = 0;
+      if (this.timerEvent) {
+        this.time.removeEvent(this.timerEvent);
+      }
+    }
+    if (this.flagText) {
+      this.flagText.setText(`Flags: ${this.remainingFlags}`);
+    }
+
+    // Create new Level
     const cellSize = 32;
     const boardWidth = 20;
 
@@ -52,18 +110,18 @@ class GameScene extends Phaser.Scene {
     this.add.existing(this.level.board);
     this.level.startLevel(boardWidth - 1, Math.floor(boardWidth / 2));
 
-    // center
+    // Center
     const centerX = this.cameras.main.width / 2;
-    //const centerY = this.cameras.main.height / 2;
+    // const centerY = this.cameras.main.height / 2;
 
-    // title of game
+    // Title of game
     this.add.text(40, 15, "Run of the Mine", {
       fontSize: "30px",
       color: "#ffffff",
       fontFamily: '"Orbitron", sans-serif',
     });
 
-    // game score, currently not synced with anything
+    // Game score, currently not synced with anything
     this.scoreText = this.add
       .text(centerX * 2 - 40, 30, "Score: 0", {
         fontSize: "30px",
@@ -72,7 +130,7 @@ class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
-    // timer, currently not synced with anything
+    // Timer, currently not synced with anything
     this.timerText = this.add
       .text(centerX * 2 - 40, 70, "Time: 0s", {
         fontSize: "30px",
@@ -81,7 +139,7 @@ class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
-    // timer functionality
+    // Timer functionality
     this.timerEvent = this.time.addEvent({
       delay: 1000, // 1 second
       callback: () => this.updateTimer(),
@@ -89,13 +147,14 @@ class GameScene extends Phaser.Scene {
       loop: true,
     });
 
-    // flags remaining display, currently not synced with anything
+    // Flags remaining display, currently not synced with anything
     this.flagText = this.add.text(40, 70, `Flags: ${this.remainingFlags}`, {
       fontSize: "24px",
       color: "#ffffff",
       fontFamily: '"Orbitron", sans-serif',
     });
   }
+
   updateScore(points: number) {
     this.score += points;
     this.scoreText.setText(`Score: ${this.score}`);
@@ -107,7 +166,7 @@ class GameScene extends Phaser.Scene {
   }
 
   levelCompleted() {
-    // reset board for new level
+    // Reset board for new level
   }
 }
 

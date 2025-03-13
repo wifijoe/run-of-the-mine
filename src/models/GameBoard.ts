@@ -5,6 +5,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   cellHeight: number;
   boardWidth: number;
   boardHeight: number;
+  gameOver: boolean = false;
 
   constructor(
     scene: Phaser.Scene,
@@ -221,6 +222,9 @@ class GameBoard extends Phaser.GameObjects.Container {
       color: "#ff0000",
     });
     this.removeInteractive();
+    this.gameOver = true;
+
+    this.scene.events.emit("gameOver");
   }
 }
 

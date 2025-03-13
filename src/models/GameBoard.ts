@@ -71,19 +71,51 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellHeight: number,
     width: number,
     height: number,
-    startX: number = width - 1,
-    startY: number = Math.floor(height / 2)
+    startX: number = width - 2,
+    startY: number = Math.floor(height / 2) - 1
   ) {
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
+        let cellContent = CellContent.EMPTY;
+
+        // Create wall cells around the border
+        if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
+          cellContent = CellContent.WALL;
+
+          // Create exit cells in the middle two cells of each edge
+          if (
+            (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
+            j === 0
+          ) {
+            cellContent = CellContent.EXIT;
+          } else if (
+            (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
+            j === height - 1
+          ) {
+            cellContent = CellContent.EXIT;
+          } else if (
+            (j === Math.floor(height / 2) ||
+              j === Math.floor(height / 2) - 1) &&
+            i === 0
+          ) {
+            cellContent = CellContent.EXIT;
+          } else if (
+            (j === Math.floor(height / 2) ||
+              j === Math.floor(height / 2) - 1) &&
+            i === width - 1
+          ) {
+            cellContent = CellContent.EXIT;
+          }
+        }
+
         const cell = new Cell(
           this.scene,
           i * cellWidth,
           j * cellHeight,
           cellWidth,
           cellHeight,
-          CellContent.EMPTY,
+          cellContent,
           this
         );
         this.grid[i][j] = cell;
@@ -91,7 +123,8 @@ class GameBoard extends Phaser.GameObjects.Container {
       }
     }
 
-    this.placeMines(startX, startY);
+    // Place mines, avoiding the edge tiles
+    this.placeMines(startX, startY, 0.15);
     this.calculateAdjacentMines();
   }
 
@@ -102,8 +135,8 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param mineDensity density of mines on the board
    */
   placeMines(
-    startX: number = this.boardWidth - 1,
-    startY: number = Math.floor(this.boardHeight / 2),
+    startX: number = this.boardWidth - 2,
+    startY: number = Math.floor(this.boardHeight / 2) - 1,
     mineDensity: number = 0.15
   ) {
     this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
@@ -114,8 +147,14 @@ class GameBoard extends Phaser.GameObjects.Container {
       const x = Math.floor(Math.random() * this.boardWidth);
       const y = Math.floor(Math.random() * this.boardHeight);
 
-      // Check if current position is the start position or adjacent to it
-      if (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1) {
+      // Check if current position is on the edge or the start position
+      if (
+        x === 0 ||
+        x === this.boardWidth - 1 ||
+        y === 0 ||
+        y === this.boardHeight - 1 ||
+        (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1)
+      ) {
         continue;
       }
 
@@ -224,7 +263,33 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.removeInteractive();
     this.gameOver = true;
 
+    // Disable interaction on each cell
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.grid[i][j].disableInteractive();
+      }
+    }
+
     this.scene.events.emit("gameOver");
+  }
+
+  winLevel() {
+    this.revealAllCells();
+    this.scene.add.text(8, 120, "You win!", {
+      fontSize: "32px",
+      color: "#00ff00",
+    });
+    this.removeInteractive();
+    this.gameOver = true;
+
+    // Disable interaction on each cell
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.grid[i][j].disableInteractive();
+      }
+    }
+
+    this.scene.events.emit("levelComplete");
   }
 }
 
@@ -254,7 +319,13 @@ class Cell extends Phaser.GameObjects.Rectangle {
     this.adjacentMines = 0;
     this.board = board;
 
-    this.setFillStyle(0x808080); // Grey for hidden cells
+    if (this.contains === CellContent.WALL) {
+      this.setFillStyle(0x000000); // Black for walls
+    } else if (this.contains === CellContent.EXIT) {
+      this.setFillStyle(0x006400); // Green for exit cells
+    } else {
+      this.setFillStyle(0x808080); // Grey for hidden cells
+    }
 
     this.setStrokeStyle(1, 0x000000);
     // Black border for all cells
@@ -267,6 +338,13 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", () => {
+      if (this.contains === CellContent.WALL) {
+        return; // Don't do anything if the cell is a wall
+      }
+      if (this.contains === CellContent.EXIT) {
+        board.winLevel();
+        return;
+      }
       const cellContains = this.board.checkCell(
         this.getGridX(),
         this.getGridY()
@@ -327,5 +405,7 @@ enum CellContent {
   EMPTY,
   HAZARD,
   TREASURE,
+  WALL,
+  EXIT,
 }
 export default GameBoard;

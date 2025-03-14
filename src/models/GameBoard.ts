@@ -266,6 +266,10 @@ class GameBoard extends Phaser.GameObjects.Container {
       this.revealAdjacentCells(x + 1, y);
       this.revealAdjacentCells(x, y - 1);
       this.revealAdjacentCells(x, y + 1);
+      this.revealAdjacentCells(x - 1, y - 1);
+      this.revealAdjacentCells(x - 1, y + 1);
+      this.revealAdjacentCells(x + 1, y - 1);
+      this.revealAdjacentCells(x + 1, y + 1);
     }
   }
 

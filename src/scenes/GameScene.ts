@@ -9,9 +9,15 @@ class GameScene extends Phaser.Scene {
   score: number = 0;
   scoreText!: Phaser.GameObjects.Text;
 
-  elapsedTime: number = 0;
-  timerText!: Phaser.GameObjects.Text;
-  timerEvent!: Phaser.Time.TimerEvent;
+  timerBar!: Phaser.GameObjects.Graphics;
+  outlineBar!: Phaser.GameObjects.Graphics;
+  timeLeft!: number;
+  totalTime!: number;
+  barWidth: number = 635;
+  barHeight: number = 20;
+  barX!: number;
+  barY!: number;
+  countdownEvent!: Phaser.Time.TimerEvent;
 
   isFlagMode: boolean = false;
   maxFlags: number = 20;
@@ -36,6 +42,7 @@ class GameScene extends Phaser.Scene {
 
     this.events.on("gameOver", () => {
       this.gameOver = true;
+      this.stopTimer();
       this.gameEndText = this.add.text(
         this.cameras.main.centerX,
         this.cameras.main.centerY,
@@ -99,13 +106,6 @@ class GameScene extends Phaser.Scene {
     if (this.scoreText) {
       this.scoreText.setText("Score: 0");
     }
-    if (this.timerText) {
-      this.timerText.setText("Time: 0s");
-      this.elapsedTime = 0;
-      if (this.timerEvent) {
-        this.time.removeEvent(this.timerEvent);
-      }
-    }
     if (this.flagText) {
       this.flagText.setText(`Flags: ${this.remainingFlags}`);
     }
@@ -153,19 +153,29 @@ class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
-    // Timer, currently not synced with anything
-    this.timerText = this.add
-      .text(centerX * 2 - 40, 70, "Time: 0s", {
-        fontSize: "30px",
-        color: "#ff0000",
-        fontFamily: '"Orbitron", sans-serif',
-      })
-      .setOrigin(1, 0);
 
-    // Timer functionality
-    this.timerEvent = this.time.addEvent({
-      delay: 1000, // 1 second
-      callback: () => this.updateTimer(),
+    // Timer
+    const { width, height } = this.scale;
+
+    this.totalTime = 150; // maybe change?
+    this.timeLeft = this.totalTime;
+
+    // Position the bar centered at the bottom
+    this.barX = width / 2 - this.barWidth / 2 - 13;
+    this.barY = height - 50;
+
+    // Create a background bar
+    this.outlineBar = this.add.graphics();
+    this.outlineBar.lineStyle(3, 0xffffff);
+    this.outlineBar.strokeRect(this.barX-3, this.barY - this.barHeight / 2-3, this.barWidth+3, this.barHeight+6);
+
+    // Create a timer bar
+    this.timerBar = this.add.graphics();
+    this.updateTimerBar();
+
+    this.countdownEvent = this.time.addEvent({
+      delay: 80,
+      callback: this.updateCountdown,
       callbackScope: this,
       loop: true,
     });
@@ -183,9 +193,32 @@ class GameScene extends Phaser.Scene {
     this.scoreText.setText(`Score: ${this.score}`);
   }
 
-  updateTimer() {
-    this.elapsedTime++;
-    this.timerText.setText(`Time: ${this.elapsedTime}s`);
+  updateCountdown() {
+    this.timeLeft -= 0.1;
+
+    if (this.timeLeft <= 0) {
+      this.timeLeft = 0;
+      this.stopTimer();
+    }
+
+    this.updateTimerBar();
+  }
+
+  updateTimerBar() {
+    this.timerBar.clear();
+
+    // Calculate remaining width of the inner bar
+    const remainingWidth = (this.timeLeft / this.totalTime) * this.barWidth;
+
+    // Draw the shrinking inner bar (red)
+    this.timerBar.fillStyle(0xff0000);
+    this.timerBar.fillRect(this.barX + 2, this.barY - this.barHeight / 2 + 2, remainingWidth - 4, this.barHeight - 4);
+  }
+
+  stopTimer() {
+    if (this.countdownEvent) {
+      this.countdownEvent.remove();
+    }
   }
 
   levelCompleted() {

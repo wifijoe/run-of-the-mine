@@ -32,10 +32,6 @@ class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  preload() {
-    // Attribution: "Designed by 0melapics / Freepik"
-    this.load.image("dirt", "assets/dirt.jpg");
-  }
 
   create() {
     this.resetLevel();

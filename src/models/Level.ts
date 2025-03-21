@@ -14,9 +14,7 @@ class Level {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number,
-    startX: number = width - 2,
-    startY: number = Math.floor(height / 2) - 1
+    cellHeight: number
   ) {
     this.board = new GameBoard(
       scene,
@@ -25,9 +23,7 @@ class Level {
       width,
       height,
       cellWidth,
-      cellHeight,
-      startX,
-      startY
+      cellHeight
     );
     this.playerPosition = [0, 0];
     this.timePlayed = 0;

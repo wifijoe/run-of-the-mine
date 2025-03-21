@@ -1,3 +1,5 @@
+import Cell, { CellContent, CellState } from "./Cell";
+
 class GameBoard extends Phaser.GameObjects.Container {
   grid: Cell[][];
   numberOfMines: number;
@@ -14,9 +16,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number,
-    startX: number,
-    startY: number
+    cellHeight: number
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -33,12 +33,6 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.setSize(width * cellWidth, height * cellHeight);
 
     this.setInteractive();
-
-    // // Handle click events on the board
-    // this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    //   console.log("Pointer down on board", pointer);
-    //   this.handlePointerDown(pointer);
-    // });
   }
 
   /**
@@ -78,7 +72,7 @@ class GameBoard extends Phaser.GameObjects.Container {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
         let cellContent = CellContent.EMPTY;
-
+        let exitImageName = "";
         // Create wall cells around the border
         if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
           cellContent = CellContent.WALL;
@@ -88,23 +82,48 @@ class GameBoard extends Phaser.GameObjects.Container {
             (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
             j === 0
           ) {
+            // top
+            if (i === Math.floor(width / 2)) {
+              exitImageName = "exit_top_right";
+            } else {
+              exitImageName = "exit_top_left";
+            }
+
             cellContent = CellContent.EXIT;
           } else if (
+            // bottom
             (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
             j === height - 1
           ) {
+            if (i === Math.floor(width / 2)) {
+              exitImageName = "exit_bottom_right";
+            } else {
+              exitImageName = "exit_bottom_left";
+            }
             cellContent = CellContent.EXIT;
           } else if (
+            // left
             (j === Math.floor(height / 2) ||
               j === Math.floor(height / 2) - 1) &&
             i === 0
           ) {
+            if (j === Math.floor(height / 2)) {
+              exitImageName = "exit_left_bottom";
+            } else {
+              exitImageName = "exit_left_top";
+            }
             cellContent = CellContent.EXIT;
           } else if (
+            // right
             (j === Math.floor(height / 2) ||
               j === Math.floor(height / 2) - 1) &&
             i === width - 1
           ) {
+            if (j === Math.floor(height / 2)) {
+              exitImageName = "exit_right_bottom";
+            } else {
+              exitImageName = "exit_right_top";
+            }
             cellContent = CellContent.EXIT;
           }
         }
@@ -113,6 +132,7 @@ class GameBoard extends Phaser.GameObjects.Container {
           this.scene,
           i * cellWidth,
           j * cellHeight,
+          exitImageName,
           cellWidth,
           cellHeight,
           cellContent,
@@ -297,119 +317,4 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 }
 
-class Cell extends Phaser.GameObjects.Rectangle {
-  cellState: CellState;
-  contains: CellContent;
-  adjacentMines: number;
-  textOfCell: Phaser.GameObjects.Text;
-  board: GameBoard;
-
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    contains: CellContent,
-    board: GameBoard
-  ) {
-    super(scene, x, y, width, height);
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.cellState = CellState.HIDDEN;
-    this.contains = contains;
-    this.adjacentMines = 0;
-    this.board = board;
-
-    if (this.contains === CellContent.WALL) {
-      this.setFillStyle(0x000000); // Black for walls
-    } else if (this.contains === CellContent.EXIT) {
-      this.setFillStyle(0x006400); // Green for exit cells
-    } else {
-      this.setFillStyle(0x808080); // Grey for hidden cells
-    }
-
-    this.setStrokeStyle(1, 0x000000);
-    // Black border for all cells
-
-    // Ensure the hit area is set correctly
-    this.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, width, height),
-      Phaser.Geom.Rectangle.Contains
-    );
-
-    // Add an event listener to detect clicks on this cell
-    this.on("pointerdown", () => {
-      if (this.contains === CellContent.WALL) {
-        return; // Don't do anything if the cell is a wall
-      }
-      if (this.contains === CellContent.EXIT) {
-        board.winLevel();
-        return;
-      }
-      const cellContains = this.board.checkCell(
-        this.getGridX(),
-        this.getGridY()
-      );
-      if (cellContains === CellContent.HAZARD) {
-        this.cellState = CellState.REVEALED;
-        board.loseGame();
-      }
-    });
-  }
-
-  // Helper methods to get grid position
-  getGridX(): number {
-    return Math.floor(this.x / this.width);
-  }
-
-  getGridY(): number {
-    return Math.floor(this.y / this.height);
-  }
-
-  update() {
-    if (this.cellState === CellState.REVEALED) {
-      if (this.contains === CellContent.HAZARD) {
-        this.setFillStyle(0xff0000);
-      } else if (this.contains === CellContent.EMPTY) {
-        this.setFillStyle(0xffffff);
-        if (this.adjacentMines > 0) {
-          if (!this.textOfCell) {
-            const bounds = this.getBounds(); // Get world bounds of the cell
-            this.textOfCell = this.scene.add.text(
-              bounds.centerX, // World X position
-              bounds.centerY, // World Y position
-              this.adjacentMines.toString(),
-              {
-                fontSize: "20px",
-                color: "#000000",
-              }
-            );
-
-            this.textOfCell.setOrigin(0.5); // Center the text inside the cell
-            this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
-          }
-        }
-      }
-    } else if (this.cellState === CellState.FLAGGED) {
-      this.setFillStyle(0xffff00);
-    }
-  }
-}
-
-export enum CellState {
-  HIDDEN,
-  REVEALED,
-  FLAGGED,
-}
-
-enum CellContent {
-  EMPTY,
-  HAZARD,
-  TREASURE,
-  WALL,
-  EXIT,
-}
 export default GameBoard;

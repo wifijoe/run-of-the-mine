@@ -27,6 +27,27 @@ export class Preloader extends Scene {
     this.load.setPath("assets");
 
     this.load.image("logo", "mineslogo.png");
+    this.load.spritesheet("knight", "Knight_10.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+
+    // Attribution: "Designed by 0melapics / Freepik"
+    this.load.image("dirt", "dirt.jpg");
+    this.load.image("exit", "tiles/exit.png");
+    this.load.image("blank_brown", "tiles/blank_brown.png");
+    this.load.image("speckled_brown", "tiles/speckled_brown.png");
+    this.load.image("speckled_tan", "tiles/speckled_tan.png");
+    this.load.image("stony_brown", "tiles/stony_brown.png");
+    this.load.image("stony_tan", "tiles/stony_tan.png");
+    this.load.image("exit_top_right", "tiles/exit_top_right.png");
+    this.load.image("exit_top_left", "tiles/exit_top_left.png");
+    this.load.image("exit_bottom_right", "tiles/exit_bottom_right.png");
+    this.load.image("exit_bottom_left", "tiles/exit_bottom_left.png");
+    this.load.image("exit_left_top", "tiles/exit_left_top.png");
+    this.load.image("exit_left_bottom", "tiles/exit_left_bottom.png");
+    this.load.image("exit_right_top", "tiles/exit_right_top.png");
+    this.load.image("exit_right_bottom", "tiles/exit_right_bottom.png");
   }
 
   create() {

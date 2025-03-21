@@ -26,24 +26,6 @@ class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  preload() {
-    // Attribution: "Designed by 0melapics / Freepik"
-    this.load.image("dirt", "assets/dirt.jpg");
-    this.load.image("exit", "assets/tiles/exit.png");
-    this.load.image("blank_brown", "assets/tiles/blank_brown.png");
-    this.load.image("speckled_brown", "assets/tiles/speckled_brown.png");
-    this.load.image("speckled_tan", "assets/tiles/speckled_tan.png");
-    this.load.image("stony_brown", "assets/tiles/stony_brown.png");
-    this.load.image("stony_tan", "assets/tiles/stony_tan.png");
-    this.load.image("exit_top_right", "assets/tiles/exit_top_right.png");
-    this.load.image("exit_top_left", "assets/tiles/exit_top_left.png");
-    this.load.image("exit_bottom_right", "assets/tiles/exit_bottom_right.png");
-    this.load.image("exit_bottom_left", "assets/tiles/exit_bottom_left.png");
-    this.load.image("exit_left_top", "assets/tiles/exit_left_top.png");
-    this.load.image("exit_left_bottom", "assets/tiles/exit_left_bottom.png");
-    this.load.image("exit_right_top", "assets/tiles/exit_right_top.png");
-    this.load.image("exit_right_bottom", "assets/tiles/exit_right_bottom.png");
-  }
 
   create() {
     this.resetLevel();

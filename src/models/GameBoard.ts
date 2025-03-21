@@ -16,9 +16,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number,
-    startX: number,
-    startY: number
+    cellHeight: number
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -35,12 +33,6 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.setSize(width * cellWidth, height * cellHeight);
 
     this.setInteractive();
-
-    // // Handle click events on the board
-    // this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    //   console.log("Pointer down on board", pointer);
-    //   this.handlePointerDown(pointer);
-    // });
   }
 
   /**

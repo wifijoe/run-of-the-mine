@@ -2,7 +2,6 @@ import GameBoard from "./GameBoard";
 
 class Level {
   board: GameBoard;
-  playerPosition: [number, number];
   timePlayed: number;
   points: number;
   hasWon: boolean;
@@ -23,10 +22,8 @@ class Level {
       width,
       height,
       cellWidth,
-      cellHeight,
-      this.movePlayer
+      cellHeight
     );
-    this.playerPosition = [0, 0]; //todo: start the player in the starting revealed space of the GameBoard
     this.timePlayed = 0;
     this.points = 0;
     this.hasWon = false;
@@ -34,10 +31,6 @@ class Level {
 
   startLevel(startX: number, startY: number) {
     this.board.revealCell(startX, startY);
-  }
-
-  movePlayer(x: number, y: number) {
-    this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
   }
 }
 

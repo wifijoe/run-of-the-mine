@@ -8,7 +8,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   boardWidth: number;
   boardHeight: number;
   gameOver: boolean = false;
-  movePlayer: (x: number, y: number) => void;
+  playerPosition: [number, number];
 
   constructor(
     scene: Phaser.Scene,
@@ -17,8 +17,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number,
-    movePlayer: (x: number, y: number) => void
+    cellHeight: number
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -29,7 +28,8 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.boardHeight = height;
     this.width = width;
     this.height = height;
-    this.movePlayer = movePlayer;
+
+    //todo: put the player in the revealed space by the entrance of the board
     this.generateBoard(cellWidth, cellHeight, width, height);
 
     this.setSize(width * cellWidth, height * cellHeight);
@@ -198,16 +198,6 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Determines what to do when a cell is clicked
-   *
-   * If the cell was a mine, you lose :(
-   *
-   * If the cell was empty, reveal all adjacent cells
-   * @param x x coordinate of the cell
-   * @param y y coordinate of the cell
-   */
-
-  /**
    * Reveals all adjacent cells
    * @param x x coordinate of the cell
    * @param y y coordinate of the cell
@@ -305,6 +295,10 @@ class GameBoard extends Phaser.GameObjects.Container {
     }
 
     this.scene.events.emit("levelComplete");
+  }
+
+  movePlayer(x: number, y: number) {
+    this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
   }
 }
 

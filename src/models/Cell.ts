@@ -37,25 +37,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
       this.imageName = "speckled";
     }
 
-    const bounds = this.getBounds(); // Get world bounds of the cell
-    if (this.contains === CellContent.WALL) {
-      this.setFillStyle(0x000000); // Black for walls
-    } else if (this.contains === CellContent.EXIT) {
-      this.image = this.scene.add.image(
-        bounds.centerX + 6 * board.cellWidth,
-        bounds.centerY + 2 * board.cellHeight,
-        this.exitImageName
-      );
-      // Green for exit cells
-    } else {
-      // this.setFillStyle(0x808080); // Grey for hidden cells
-      this.image = this.scene.add.image(
-        bounds.centerX + 6 * board.cellWidth,
-        bounds.centerY + 2 * board.cellHeight,
-        this.imageName + "_brown"
-      );
-      this.image.setToTop();
-    }
+    this.updateAppearance();
 
     // this.setStrokeStyle(1, 0x000000);
     // Black border for all cells
@@ -89,20 +71,10 @@ class Cell extends Phaser.GameObjects.Rectangle {
     });
   }
 
-  // Helper methods to get grid position
-  getGridX(): number {
-    return Math.floor(this.x / this.width);
-  }
-
-  getGridY(): number {
-    return Math.floor(this.y / this.height);
-  }
-
   update() {
+    this.updateAppearance();
     if (this.cellState === CellState.REVEALED) {
-      if (this.contains === CellContent.HAZARD) {
-        this.setFillStyle(0xff0000);
-      } else if (this.contains === CellContent.EMPTY) {
+      if (this.contains === CellContent.EMPTY) {
         this.setFillStyle(0xffffff);
         const bounds = this.getBounds(); // Get world bounds of the cell
         this.image = this.scene.add.image(
@@ -127,9 +99,40 @@ class Cell extends Phaser.GameObjects.Rectangle {
           }
         }
       }
+    }
+  }
+
+  updateAppearance() {
+    const bounds = this.getBounds(); // Get world bounds of the cell
+    if (this.cellState === CellState.HIDDEN) {
+      this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
       this.setFillStyle(0xffff00);
+    } else if (this.cellState === CellState.VISIBLE) {
+      this.image = this.scene.add.image(
+        bounds.centerX,
+        bounds.centerY,
+        this.imageName + "_brown"
+      );
+      this.image.setToTop();
+    } else if (this.contains === CellContent.WALL) {
+      this.setFillStyle(0x000000); // Black for walls
+    } else if (this.contains === CellContent.EXIT) {
+      this.image = this.scene.add.image(
+        bounds.centerX + 6 * this.board.cellWidth,
+        bounds.centerY + 2 * this.board.cellHeight,
+        this.exitImageName
+      );
     }
+  }
+
+  // Helper methods to get grid position
+  getGridX(): number {
+    return Math.floor(this.x / this.width);
+  }
+
+  getGridY(): number {
+    return Math.floor(this.y / this.height);
   }
 }
 

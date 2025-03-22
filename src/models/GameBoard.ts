@@ -286,6 +286,7 @@ class GameBoard extends Phaser.GameObjects.Container {
       cell.cellState = CellState.VISIBLE;
       return;
     }
+    cell.updateAppearance();
   }
 
   /**

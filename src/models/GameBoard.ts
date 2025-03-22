@@ -36,28 +36,6 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Handles click events on the board
-   * @param pointer the pointer that was clicked
-   */
-  handlePointerDown(pointer: Phaser.Input.Pointer) {
-    const localX = pointer.x - this.x;
-    const localY = pointer.y - this.y;
-
-    const cellX = Math.floor(localX / this.cellWidth);
-    const cellY = Math.floor(localY / this.cellHeight);
-
-    // Ensure the click is within the board bounds
-    if (
-      cellX >= 0 &&
-      cellX < this.boardWidth &&
-      cellY >= 0 &&
-      cellY < this.boardHeight
-    ) {
-      this.checkCell(cellX, cellY);
-    }
-  }
-
-  /**
    * Generates a new game board (populates this.grid with cells)
    */
   generateBoard(
@@ -228,14 +206,14 @@ class GameBoard extends Phaser.GameObjects.Container {
    */
   checkCell(x: number, y: number): CellContent {
     const cell = this.grid[x][y];
-    if (cell.cellState != CellState.HIDDEN) {
-      if (cell.contains === CellContent.HAZARD) {
-        return CellContent.HAZARD;
-      }
-      if (cell.contains === CellContent.EMPTY) {
-        this.revealAdjacentCells(x, y);
-      }
+    //  if (cell.cellState != CellState.HIDDEN) {
+    if (cell.contains === CellContent.HAZARD) {
+      return CellContent.HAZARD;
     }
+    if (cell.contains === CellContent.EMPTY) {
+      this.revealAdjacentCells(x, y);
+    }
+    //  }
     return cell.contains;
   }
 
@@ -254,7 +232,7 @@ class GameBoard extends Phaser.GameObjects.Container {
       return;
     }
     cell.cellState = CellState.REVEALED;
-    cell.update();
+    cell.updateAppearance();
     if (cell.adjacentMines === 0) {
       this.revealAdjacentCells(x - 1, y);
       this.revealAdjacentCells(x + 1, y);
@@ -284,9 +262,11 @@ class GameBoard extends Phaser.GameObjects.Container {
     const cell = this.grid[x][y];
     if (cell.cellState === CellState.HIDDEN) {
       cell.cellState = CellState.VISIBLE;
+      cell.updateAppearance();
+
       return;
     }
-    cell.updateAppearance();
+    //   cell.update();
   }
 
   /**
@@ -297,7 +277,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     for (let i = 0; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
         this.grid[i][j].cellState = CellState.REVEALED;
-        this.grid[i][j].update();
+        this.grid[i][j].updateAppearance();
       }
     }
   }

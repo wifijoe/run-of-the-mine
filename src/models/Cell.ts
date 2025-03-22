@@ -121,6 +121,8 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
           this.textOfCell.setOrigin(0.5); // Center the text inside the cell
           this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
+        } else {
+          this.textOfCell.setAbove(this.image);
         }
       }
     } else if (this.contains === CellContent.HAZARD) {

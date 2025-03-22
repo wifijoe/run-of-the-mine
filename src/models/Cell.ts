@@ -68,20 +68,23 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", () => {
-      if (this.contains === CellContent.WALL) {
-        return; // Don't do anything if the cell is a wall
-      }
-      if (this.contains === CellContent.EXIT) {
-        board.winLevel();
-        return;
-      }
-      const cellContains = this.board.checkCell(
-        this.getGridX(),
-        this.getGridY()
-      );
-      if (cellContains === CellContent.HAZARD) {
-        this.cellState = CellState.REVEALED;
-        board.loseGame();
+      if (this.cellState != CellState.HIDDEN) {
+        // hidden cells are unclickable
+        if (this.contains === CellContent.WALL) {
+          return; // Don't do anything if the cell is a wall
+        }
+        if (this.contains === CellContent.EXIT) {
+          board.winLevel();
+          return;
+        }
+        const cellContains = this.board.checkCell(
+          this.getGridX(),
+          this.getGridY()
+        );
+        if (cellContains === CellContent.HAZARD) {
+          this.cellState = CellState.REVEALED;
+          board.loseGame();
+        }
       }
     });
   }
@@ -132,6 +135,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
 export enum CellState {
   HIDDEN,
+  VISIBLE,
   REVEALED,
   FLAGGED,
 }

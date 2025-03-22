@@ -228,11 +228,13 @@ class GameBoard extends Phaser.GameObjects.Container {
    */
   checkCell(x: number, y: number): CellContent {
     const cell = this.grid[x][y];
-    if (cell.contains === CellContent.HAZARD) {
-      return CellContent.HAZARD;
-    }
-    if (cell.contains === CellContent.EMPTY) {
-      this.revealAdjacentCells(x, y);
+    if (cell.cellState != CellState.HIDDEN) {
+      if (cell.contains === CellContent.HAZARD) {
+        return CellContent.HAZARD;
+      }
+      if (cell.contains === CellContent.EMPTY) {
+        this.revealAdjacentCells(x, y);
+      }
     }
     return cell.contains;
   }
@@ -262,6 +264,27 @@ class GameBoard extends Phaser.GameObjects.Container {
       this.revealAdjacentCells(x - 1, y + 1);
       this.revealAdjacentCells(x + 1, y - 1);
       this.revealAdjacentCells(x + 1, y + 1);
+    } else {
+      this.setCellVisible(x - 1, y);
+      this.setCellVisible(x + 1, y);
+      this.setCellVisible(x, y - 1);
+      this.setCellVisible(x, y + 1);
+      this.setCellVisible(x - 1, y - 1);
+      this.setCellVisible(x - 1, y + 1);
+      this.setCellVisible(x + 1, y - 1);
+      this.setCellVisible(x + 1, y + 1);
+    }
+  }
+
+  setCellVisible(x: number, y: number) {
+    // Check to make sure x and y are valid
+    if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
+      return;
+    }
+    const cell = this.grid[x][y];
+    if (cell.cellState === CellState.HIDDEN) {
+      cell.cellState = CellState.VISIBLE;
+      return;
     }
   }
 

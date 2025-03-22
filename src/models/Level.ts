@@ -23,16 +23,21 @@ class Level {
       width,
       height,
       cellWidth,
-      cellHeight
+      cellHeight,
+      this.movePlayer
     );
-    this.playerPosition = [0, 0];
+    this.playerPosition = [0, 0]; //todo: start the player in the starting revealed space of the GameBoard
     this.timePlayed = 0;
     this.points = 0;
     this.hasWon = false;
   }
 
   startLevel(startX: number, startY: number) {
-    this.board.revealAdjacentCells(startX, startY);
+    this.board.revealCell(startX, startY);
+  }
+
+  movePlayer(x: number, y: number) {
+    this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
   }
 }
 

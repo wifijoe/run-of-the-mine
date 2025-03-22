@@ -54,18 +54,14 @@ class Cell extends Phaser.GameObjects.Rectangle {
         // hidden cells are unclickable
         if (this.contains === CellContent.WALL) {
           return; // Don't do anything if the cell is a wall
-        }
-        if (this.contains === CellContent.EXIT) {
+        } else if (this.contains === CellContent.EXIT) {
           board.winLevel();
           return;
-        }
-        const cellContains = this.board.checkCell(
-          this.getGridX(),
-          this.getGridY()
-        );
-        if (cellContains === CellContent.HAZARD) {
+        } else if (this.contains === CellContent.HAZARD) {
           this.cellState = CellState.REVEALED;
           board.loseGame();
+        } else {
+          this.board.revealCell(this.getGridX(), this.getGridY());
         }
       }
     });

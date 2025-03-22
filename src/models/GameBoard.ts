@@ -8,6 +8,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   boardWidth: number;
   boardHeight: number;
   gameOver: boolean = false;
+  movePlayer: (x: number, y: number) => void;
 
   constructor(
     scene: Phaser.Scene,
@@ -16,7 +17,8 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    movePlayer: (x: number, y: number) => void
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -27,7 +29,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.boardHeight = height;
     this.width = width;
     this.height = height;
-
+    this.movePlayer = movePlayer;
     this.generateBoard(cellWidth, cellHeight, width, height);
 
     this.setSize(width * cellWidth, height * cellHeight);
@@ -204,25 +206,13 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param x x coordinate of the cell
    * @param y y coordinate of the cell
    */
-  checkCell(x: number, y: number): CellContent {
-    const cell = this.grid[x][y];
-    //  if (cell.cellState != CellState.HIDDEN) {
-    if (cell.contains === CellContent.HAZARD) {
-      return CellContent.HAZARD;
-    }
-    if (cell.contains === CellContent.EMPTY) {
-      this.revealAdjacentCells(x, y);
-    }
-    //  }
-    return cell.contains;
-  }
 
   /**
    * Reveals all adjacent cells
    * @param x x coordinate of the cell
    * @param y y coordinate of the cell
    */
-  revealAdjacentCells(x: number, y: number) {
+  revealCell(x: number, y: number) {
     // Check to make sure x and y are valid
     if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
       return;
@@ -234,14 +224,14 @@ class GameBoard extends Phaser.GameObjects.Container {
     cell.cellState = CellState.REVEALED;
     cell.updateAppearance();
     if (cell.adjacentMines === 0) {
-      this.revealAdjacentCells(x - 1, y);
-      this.revealAdjacentCells(x + 1, y);
-      this.revealAdjacentCells(x, y - 1);
-      this.revealAdjacentCells(x, y + 1);
-      this.revealAdjacentCells(x - 1, y - 1);
-      this.revealAdjacentCells(x - 1, y + 1);
-      this.revealAdjacentCells(x + 1, y - 1);
-      this.revealAdjacentCells(x + 1, y + 1);
+      this.revealCell(x - 1, y);
+      this.revealCell(x + 1, y);
+      this.revealCell(x, y - 1);
+      this.revealCell(x, y + 1);
+      this.revealCell(x - 1, y - 1);
+      this.revealCell(x - 1, y + 1);
+      this.revealCell(x + 1, y - 1);
+      this.revealCell(x + 1, y + 1);
     } else {
       this.setCellVisible(x - 1, y);
       this.setCellVisible(x + 1, y);

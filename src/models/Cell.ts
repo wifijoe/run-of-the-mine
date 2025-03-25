@@ -71,8 +71,10 @@ class Cell extends Phaser.GameObjects.Rectangle {
       } else if (pointer.button === 2) {
         if (this.cellState == CellState.FLAGGED) {
           this.cellState = CellState.VISIBLE;
-        } else if (this.cellState != CellState.HIDDEN) {
+        } else if (this.cellState == CellState.VISIBLE) {
           this.cellState = CellState.FLAGGED;
+        } else if (this.cellState == CellState.REVEALED) {
+          //todo: place a bomb
         }
       }
     });

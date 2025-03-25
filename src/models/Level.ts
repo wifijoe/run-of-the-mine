@@ -1,4 +1,4 @@
-import GameBoard from "./GameBoard";
+import GameBoard, { Compass } from "./GameBoard";
 
 class Level {
   board: GameBoard;
@@ -22,7 +22,8 @@ class Level {
       width,
       height,
       cellWidth,
-      cellHeight
+      cellHeight,
+      Compass.SOUTH
     );
     this.timePlayed = 0;
     this.points = 0;

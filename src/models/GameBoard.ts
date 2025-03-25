@@ -9,7 +9,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   boardHeight: number;
   gameOver: boolean = false;
   playerPosition: [number, number];
-
+  entranceDirection: Compass;
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -17,7 +17,8 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    entranceDirection: Compass //
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -30,7 +31,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.height = height;
 
     //todo: put the player in the revealed space by the entrance of the board
-    this.generateBoard(cellWidth, cellHeight, width, height);
+    this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
 
     this.setSize(width * cellWidth, height * cellHeight);
 
@@ -45,9 +46,17 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellHeight: number,
     width: number,
     height: number,
-    startX: number = width - 2,
-    startY: number = Math.floor(height / 2) - 1
+    entranceDirection: Compass
   ) {
+    this.entranceDirection = entranceDirection;
+    //randomly select four points for the exits/entrance
+    const exits = [
+      Math.floor(Math.random() * (width - 2)) + 1, // north exit west cell
+      Math.floor(Math.random() * (height - 2)) + 1, // east exit north cell
+      Math.floor(Math.random() * (width - 2)) + 1, // south exit west cell
+      Math.floor(Math.random() * (height - 2)) + 1, // west exit north cell
+    ];
+
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
@@ -57,54 +66,48 @@ class GameBoard extends Phaser.GameObjects.Container {
         if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
           cellContent = CellContent.WALL;
 
-          // Create exit cells in the middle two cells of each edge
-          if (
-            (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
-            j === 0
-          ) {
-            // top
-            if (i === Math.floor(width / 2)) {
-              exitImageName = "exit_top_right";
-            } else {
+          // Create exit cells in two cells of each edge
+          // top
+          if ((i === exits[0] || i === exits[0] + 1) && j === 0) {
+            if (entranceDirection != Compass.NORTH) {
+              cellContent = CellContent.EXIT;
+            }
+            // TODO: get an entrance sprite (collapsed tunnel?) and use in all cases
+            if (i === exits[0]) {
               exitImageName = "exit_top_left";
-            }
-
-            cellContent = CellContent.EXIT;
-          } else if (
-            // bottom
-            (i === Math.floor(width / 2) || i === Math.floor(width / 2) - 1) &&
-            j === height - 1
-          ) {
-            if (i === Math.floor(width / 2)) {
-              exitImageName = "exit_bottom_right";
             } else {
+              exitImageName = "exit_top_right";
+            }
+          } // bottom
+          else if ((i === exits[2] || i === exits[2] + 1) && j === height - 1) {
+            if (entranceDirection != Compass.SOUTH) {
+              cellContent = CellContent.EXIT;
+            }
+            if (i === exits[2]) {
               exitImageName = "exit_bottom_left";
-            }
-            cellContent = CellContent.EXIT;
-          } else if (
-            // left
-            (j === Math.floor(height / 2) ||
-              j === Math.floor(height / 2) - 1) &&
-            i === 0
-          ) {
-            if (j === Math.floor(height / 2)) {
-              exitImageName = "exit_left_bottom";
             } else {
+              exitImageName = "exit_bottom_right";
+            }
+          } // left
+          else if ((j === exits[3] || j === exits[3] + 1) && i === 0) {
+            if (entranceDirection != Compass.WEST) {
+              cellContent = CellContent.EXIT;
+            }
+            if (j === exits[3]) {
               exitImageName = "exit_left_top";
-            }
-            cellContent = CellContent.EXIT;
-          } else if (
-            // right
-            (j === Math.floor(height / 2) ||
-              j === Math.floor(height / 2) - 1) &&
-            i === width - 1
-          ) {
-            if (j === Math.floor(height / 2)) {
-              exitImageName = "exit_right_bottom";
             } else {
-              exitImageName = "exit_right_top";
+              exitImageName = "exit_left_bottom";
             }
-            cellContent = CellContent.EXIT;
+          } // right
+          else if ((j === exits[1] || j === exits[1] + 1) && i === width - 1) {
+            if (entranceDirection != Compass.EAST) {
+              cellContent = CellContent.EXIT;
+            }
+            if (j === exits[1]) {
+              exitImageName = "exit_right_top";
+            } else {
+              exitImageName = "exit_right_bottom";
+            }
           }
         }
 
@@ -123,9 +126,30 @@ class GameBoard extends Phaser.GameObjects.Container {
       }
     }
 
+    let startX, startY: number;
+    switch (entranceDirection) {
+      case Compass.NORTH:
+        startX = exits[0];
+        startY = 1;
+        break;
+      case Compass.EAST:
+        startX = width - 2;
+        startY = exits[1];
+        break;
+      case Compass.SOUTH:
+        startX = exits[2];
+        startY = height - 2;
+        break;
+      case Compass.WEST:
+        startX = 1;
+        startY = exits[3];
+        break;
+    }
     // Place mines, avoiding the edge tiles
-    this.placeMines(startX, startY, 0.15);
+    this.playerPosition = [startX!, startY!];
+    this.placeMines(startX!, startY!, 0.15);
     this.calculateAdjacentMines();
+    //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
 
   /**
@@ -134,27 +158,17 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param startY y coordinate of the starting cell
    * @param mineDensity density of mines on the board
    */
-  placeMines(
-    startX: number = this.boardWidth - 2,
-    startY: number = Math.floor(this.boardHeight / 2) - 1,
-    mineDensity: number = 0.15
-  ) {
+  placeMines(startX: number, startY: number, mineDensity: number) {
     this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
     let minesPlaced = 0;
 
     while (minesPlaced < this.numberOfMines) {
       // We need an x and a y that are random and within the bounds of the board
-      const x = Math.floor(Math.random() * this.boardWidth);
-      const y = Math.floor(Math.random() * this.boardHeight);
+      const x = Math.floor(Math.random() * (this.boardWidth - 2)) + 1;
+      const y = Math.floor(Math.random() * (this.boardHeight - 2)) + 1;
 
-      // Check if current position is on the edge or the start position
-      if (
-        x === 0 ||
-        x === this.boardWidth - 1 ||
-        y === 0 ||
-        y === this.boardHeight - 1 ||
-        (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1)
-      ) {
+      // Check if current position is in the start area
+      if (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1) {
         continue;
       }
 
@@ -297,9 +311,19 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.scene.events.emit("levelComplete");
   }
 
+  revealStart() {
+    this.revealCell(this.playerPosition[0], this.playerPosition[1]);
+  }
+
   movePlayer(x: number, y: number) {
     this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
   }
 }
 
+export enum Compass {
+  NORTH,
+  EAST,
+  SOUTH,
+  WEST,
+}
 export default GameBoard;

@@ -25,13 +25,13 @@ class GameScene extends Phaser.Scene {
   flagText!: Phaser.GameObjects.Text;
   modeText!: Phaser.GameObjects.Text;
   flagButton!: Phaser.GameObjects.Rectangle;
+  basicDifficulty = [0, 0, 0]; // size, time, mine density
 
   private keydownListener: (event: KeyboardEvent) => void;
 
   constructor() {
     super("GameScene");
   }
-
 
   create() {
     this.resetLevel();
@@ -54,6 +54,7 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.setOrigin(0.5);
       this.keydownListener = (event: KeyboardEvent) => {
         if (event.key === "r" || event.key === "R") {
+          this.basicDifficulty = [0, 0, 0];
           this.resetLevel();
         }
       };
@@ -65,7 +66,7 @@ class GameScene extends Phaser.Scene {
       this.gameEndText = this.add.text(
         this.cameras.main.centerX,
         this.cameras.main.centerY,
-        "You escaped! Press R to Restart",
+        "You escaped! Press N to Continue.",
         {
           fontSize: "32px",
           color: "#000000",
@@ -76,8 +77,9 @@ class GameScene extends Phaser.Scene {
       );
       this.gameEndText.setOrigin(0.5);
       this.keydownListener = (event: KeyboardEvent) => {
-        if (event.key === "r" || event.key === "R") {
-          this.resetLevel();
+        if (event.key === "n" || event.key === "N") {
+          this.basicDifficulty[0] += 1; // todo: make difficulty increase random
+          this.nextLevel();
         }
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
@@ -124,10 +126,11 @@ class GameScene extends Phaser.Scene {
       boardWidth,
       boardWidth,
       cellSize,
-      cellSize
+      cellSize,
+      0
     );
     this.add.existing(this.level.board);
-    this.level.startLevel(boardWidth - 2, Math.floor(boardWidth / 2) - 1);
+    this.level.startLevel();
 
     // Center
     const centerX = this.cameras.main.width / 2;
@@ -149,6 +152,110 @@ class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
+    // Timer
+    const { width, height } = this.scale;
+
+    this.totalTime = 150; // maybe change?
+    this.timeLeft = this.totalTime;
+
+    // Position the bar centered at the bottom
+    this.barX = width / 2 - this.barWidth / 2 - 13;
+    this.barY = height - 50;
+
+    // Create a background bar
+    this.outlineBar = this.add.graphics();
+    this.outlineBar.lineStyle(3, 0xffffff);
+    this.outlineBar.strokeRect(
+      this.barX - 3,
+      this.barY - this.barHeight / 2 - 3,
+      this.barWidth + 3,
+      this.barHeight + 6
+    );
+
+    // Create a timer bar
+    this.timerBar = this.add.graphics();
+    this.updateTimerBar();
+
+    this.countdownEvent = this.time.addEvent({
+      delay: 80,
+      callback: this.updateCountdown,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // Flags remaining display, currently not synced with anything
+    this.flagText = this.add.text(40, 70, `Flags: ${this.remainingFlags}`, {
+      fontSize: "24px",
+      color: "#ffffff",
+      fontFamily: '"Orbitron", sans-serif',
+    });
+  }
+
+  nextLevel() {
+    this.gameOver = false;
+    if (this.level) {
+      this.level.board.destroy();
+    }
+
+    // Remove other game objects
+    if (this.gameEndText) {
+      this.gameEndText.destroy();
+    }
+
+    // Remove the event listener
+    this.input.keyboard?.off("keydown", this.keydownListener);
+
+    /*   // Reset other game objects
+    if (this.scoreText) {
+      this.scoreText.setText("Score: 0");
+    }
+    if (this.flagText) {
+      this.flagText.setText(`Flags: ${this.remainingFlags}`);
+    } */
+
+    // Create new Level
+    const cellSize = 32;
+    const boardWidth = 20 + this.basicDifficulty[0];
+
+    this.add.image(0, 0, "dirt").setOrigin(0, 0);
+
+    const x =
+      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+    const y =
+      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
+
+    this.level = new Level(
+      this,
+      x,
+      y,
+      boardWidth,
+      boardWidth,
+      cellSize,
+      cellSize,
+      0
+    );
+    this.add.existing(this.level.board);
+    this.level.startLevel();
+
+    // Center
+    const centerX = this.cameras.main.width / 2;
+    // const centerY = this.cameras.main.height / 2;
+
+    // Title of game
+    this.add.text(40, 15, "Run of the Mine", {
+      fontSize: "30px",
+      color: "#ffffff",
+      fontFamily: '"Orbitron", sans-serif',
+    });
+
+    // Game score, currently not synced with anything
+    this.scoreText = this.add
+      .text(centerX * 2 - 40, 30, "Score: 0", {
+        fontSize: "30px",
+        color: "#ffffff",
+        fontFamily: '"Orbitron", sans-serif',
+      })
+      .setOrigin(1, 0);
 
     // Timer
     const { width, height } = this.scale;
@@ -163,7 +270,12 @@ class GameScene extends Phaser.Scene {
     // Create a background bar
     this.outlineBar = this.add.graphics();
     this.outlineBar.lineStyle(3, 0xffffff);
-    this.outlineBar.strokeRect(this.barX-3, this.barY - this.barHeight / 2-3, this.barWidth+3, this.barHeight+6);
+    this.outlineBar.strokeRect(
+      this.barX - 3,
+      this.barY - this.barHeight / 2 - 3,
+      this.barWidth + 3,
+      this.barHeight + 6
+    );
 
     // Create a timer bar
     this.timerBar = this.add.graphics();
@@ -208,7 +320,12 @@ class GameScene extends Phaser.Scene {
 
     // Draw the shrinking inner bar (red)
     this.timerBar.fillStyle(0xff0000);
-    this.timerBar.fillRect(this.barX + 2, this.barY - this.barHeight / 2 + 2, remainingWidth - 4, this.barHeight - 4);
+    this.timerBar.fillRect(
+      this.barX + 2,
+      this.barY - this.barHeight / 2 + 2,
+      remainingWidth - 4,
+      this.barHeight - 4
+    );
   }
 
   stopTimer() {

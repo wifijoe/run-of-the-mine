@@ -5,6 +5,7 @@ class Level {
   timePlayed: number;
   points: number;
   hasWon: boolean;
+  levelDifficulty: number;
 
   constructor(
     scene: Phaser.Scene,
@@ -13,7 +14,8 @@ class Level {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    levelDifficulty: number
   ) {
     this.board = new GameBoard(
       scene,
@@ -28,9 +30,10 @@ class Level {
     this.timePlayed = 0;
     this.points = 0;
     this.hasWon = false;
+    this.levelDifficulty = levelDifficulty;
   }
 
-  startLevel(startX: number, startY: number) {
+  startLevel() {
     this.board.revealStart();
   }
 }

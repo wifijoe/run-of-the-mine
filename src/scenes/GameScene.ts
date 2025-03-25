@@ -32,7 +32,6 @@ class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-
   create() {
     this.resetLevel();
 
@@ -149,7 +148,6 @@ class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
-
     // Timer
     const { width, height } = this.scale;
 
@@ -163,7 +161,12 @@ class GameScene extends Phaser.Scene {
     // Create a background bar
     this.outlineBar = this.add.graphics();
     this.outlineBar.lineStyle(3, 0xffffff);
-    this.outlineBar.strokeRect(this.barX-3, this.barY - this.barHeight / 2-3, this.barWidth+3, this.barHeight+6);
+    this.outlineBar.strokeRect(
+      this.barX - 3,
+      this.barY - this.barHeight / 2 - 3,
+      this.barWidth + 3,
+      this.barHeight + 6
+    );
 
     // Create a timer bar
     this.timerBar = this.add.graphics();
@@ -208,7 +211,12 @@ class GameScene extends Phaser.Scene {
 
     // Draw the shrinking inner bar (red)
     this.timerBar.fillStyle(0xff0000);
-    this.timerBar.fillRect(this.barX + 2, this.barY - this.barHeight / 2 + 2, remainingWidth - 4, this.barHeight - 4);
+    this.timerBar.fillRect(
+      this.barX + 2,
+      this.barY - this.barHeight / 2 + 2,
+      remainingWidth - 4,
+      this.barHeight - 4
+    );
   }
 
   stopTimer() {

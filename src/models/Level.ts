@@ -31,7 +31,7 @@ class Level {
   }
 
   startLevel(startX: number, startY: number) {
-    this.board.revealCell(startX, startY);
+    this.board.revealStart();
   }
 }
 

@@ -15,6 +15,8 @@ const config: Types.Core.GameConfig = {
   height: 768,
   parent: "game-container",
   backgroundColor: "#028af8",
+  disableContextMenu: true, // to allow right-clicks on the board
+
   // plugins: {
   //   scene: [
   //     {

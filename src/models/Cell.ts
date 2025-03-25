@@ -49,19 +49,30 @@ class Cell extends Phaser.GameObjects.Rectangle {
     );
 
     // Add an event listener to detect clicks on this cell
-    this.on("pointerdown", () => {
-      if (this.cellState != CellState.HIDDEN) {
-        // hidden cells are unclickable
-        if (this.contains === CellContent.WALL) {
-          return; // Don't do anything if the cell is a wall
-        } else if (this.contains === CellContent.EXIT) {
-          board.winLevel();
-          return;
-        } else if (this.contains === CellContent.HAZARD) {
-          this.cellState = CellState.REVEALED;
-          board.loseGame();
-        } else {
-          this.board.revealCell(this.getGridX(), this.getGridY());
+    this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.button === 0) {
+        if (
+          this.cellState != CellState.HIDDEN &&
+          this.cellState != CellState.FLAGGED
+        ) {
+          // hidden cells are unclickable
+          if (this.contains === CellContent.WALL) {
+            return; // Don't do anything if the cell is a wall
+          } else if (this.contains === CellContent.EXIT) {
+            board.winLevel();
+            return;
+          } else if (this.contains === CellContent.HAZARD) {
+            this.cellState = CellState.REVEALED;
+            board.loseGame();
+          } else {
+            this.board.revealCell(this.getGridX(), this.getGridY());
+          }
+        }
+      } else if (pointer.button === 2) {
+        if (this.cellState == CellState.FLAGGED) {
+          this.cellState = CellState.VISIBLE;
+        } else if (this.cellState != CellState.HIDDEN) {
+          this.cellState = CellState.FLAGGED;
         }
       }
     });

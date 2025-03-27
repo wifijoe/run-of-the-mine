@@ -1,4 +1,5 @@
 import Cell, { CellContent, CellState } from "./Cell";
+import { Player } from "./Player";
 
 class GameBoard extends Phaser.GameObjects.Container {
   grid: Cell[][];
@@ -9,6 +10,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   boardHeight: number;
   gameOver: boolean = false;
   playerPosition: [number, number];
+  player: Player;
   entranceDirection: Compass;
   constructor(
     scene: Phaser.Scene,
@@ -18,7 +20,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    entranceDirection: Compass //
+    entranceDirection: Compass
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -145,10 +147,18 @@ class GameBoard extends Phaser.GameObjects.Container {
         startY = exits[3];
         break;
     }
+    const startCell = this.grid[startX][startY];
     // Place mines, avoiding the edge tiles
+    this.player = new Player(
+      this.scene,
+      startCell.getBoundsX(),
+      startCell.getBoundsY()
+    );
     this.playerPosition = [startX!, startY!];
     this.placeMines(startX!, startY!, 0.15);
     this.calculateAdjacentMines();
+    this.scene.add.existing(this.player);
+    // this.movePlayer(startX, startY);
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
 
@@ -288,7 +298,6 @@ class GameBoard extends Phaser.GameObjects.Container {
         this.grid[i][j].disableInteractive();
       }
     }
-
     this.scene.events.emit("gameOver");
   }
 
@@ -300,7 +309,6 @@ class GameBoard extends Phaser.GameObjects.Container {
     });
     this.removeInteractive();
     this.gameOver = true;
-
     // Disable interaction on each cell
     for (let i = 0; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
@@ -315,8 +323,23 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.revealCell(this.playerPosition[0], this.playerPosition[1]);
   }
 
+  /**
+   * Moves the player to the specified grid coordinates
+   * @param x X coordinate in the grid
+   * @param y Y coordinate in the grid
+   */
   movePlayer(x: number, y: number) {
-    this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
+    // Calculate pixel coordinates
+    // const pixelX = x * this.cellWidth;
+    // const pixelY = y * this.cellHeight;
+
+    // Update player position
+    this.player.x = x;
+    this.player.y = y;
+
+    // Update player position tracking
+    console.log("Player moved to: ", x, y);
+    this.playerPosition = [x, y];
   }
 }
 

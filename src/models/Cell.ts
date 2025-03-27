@@ -50,6 +50,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      const bounds = this.getBounds();
       if (pointer.button === 0) {
         if (
           this.cellState != CellState.HIDDEN &&
@@ -59,13 +60,18 @@ class Cell extends Phaser.GameObjects.Rectangle {
           if (this.contains === CellContent.WALL) {
             return; // Don't do anything if the cell is a wall
           } else if (this.contains === CellContent.EXIT) {
-            board.winLevel();
+            this.board.winLevel();
             return;
           } else if (this.contains === CellContent.HAZARD) {
             this.cellState = CellState.REVEALED;
-            board.loseGame();
+            this.board.loseGame();
           } else {
-            this.board.revealCell(this.getGridX(), this.getGridY());
+            // the cell is empty
+            if (this.cellState === CellState.REVEALED) {
+              this.board.movePlayer(bounds.centerX, bounds.centerY);
+            } else {
+              this.board.revealCell(this.getGridX(), this.getGridY());
+            }
           }
         }
       } else if (pointer.button === 2) {
@@ -89,7 +95,8 @@ class Cell extends Phaser.GameObjects.Rectangle {
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
-      this.setFillStyle(0xffff00); // whatever color this is for flagged cells
+      this.image = this.scene.add.image(bounds.centerX, bounds.centerY, "flag");
+      // whatever color this is for flagged cells
     } else if (this.contains === CellContent.WALL) {
       // revealed/visible doesn't
       this.setFillStyle(0x000000); // Black          // matter for walls or exit
@@ -109,7 +116,6 @@ class Cell extends Phaser.GameObjects.Rectangle {
     } else if (this.contains === CellContent.EMPTY) {
       // all branches from here are revealed
       this.setFillStyle(0xffffff);
-      const bounds = this.getBounds(); // Get world bounds of the cell
       this.image = this.scene.add.image(
         bounds.centerX,
         bounds.centerY,
@@ -135,7 +141,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
         }
       }
     } else if (this.contains === CellContent.HAZARD) {
-      this.setFillStyle(0xff0000);
+      this.image = this.scene.add.image(bounds.centerX, bounds.centerY, "mine");
     }
   }
 
@@ -146,6 +152,16 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
   getGridY(): number {
     return Math.floor(this.y / this.height);
+  }
+
+  getBoundsX(): number {
+    const bounds = this.getBounds();
+    return bounds.x;
+  }
+
+  getBoundsY(): number {
+    const bounds = this.getBounds();
+    return bounds.y;
   }
 }
 

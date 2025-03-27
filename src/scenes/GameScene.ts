@@ -97,6 +97,10 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.destroy();
     }
 
+    if (this.level?.board?.player.active) {
+      this.level.board.player.destroy();
+    }
+
     // Remove the event listener
     this.input.keyboard?.off("keydown", this.keydownListener);
 
@@ -200,6 +204,10 @@ class GameScene extends Phaser.Scene {
     // Remove other game objects
     if (this.gameEndText) {
       this.gameEndText.destroy();
+    }
+
+    if (this.level?.board?.player.active) {
+      this.level.board.player.destroy();
     }
 
     // Remove the event listener
@@ -336,6 +344,8 @@ class GameScene extends Phaser.Scene {
 
   levelCompleted() {
     // Reset board for new level
+    // make sure to destroy the sprite so a new one can be created
+    this.level.board.player.destroy();
   }
 }
 

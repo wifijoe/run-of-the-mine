@@ -40,6 +40,8 @@ export class Preloader extends Scene {
     this.load.image("speckled_tan", "tiles/speckled_tan.png");
     this.load.image("stony_brown", "tiles/stony_brown.png");
     this.load.image("stony_tan", "tiles/stony_tan.png");
+
+    // Exits
     this.load.image("exit_top_right", "tiles/exit_top_right.png");
     this.load.image("exit_top_left", "tiles/exit_top_left.png");
     this.load.image("exit_bottom_right", "tiles/exit_bottom_right.png");
@@ -48,6 +50,9 @@ export class Preloader extends Scene {
     this.load.image("exit_left_bottom", "tiles/exit_left_bottom.png");
     this.load.image("exit_right_top", "tiles/exit_right_top.png");
     this.load.image("exit_right_bottom", "tiles/exit_right_bottom.png");
+
+    this.load.image("flag", "flag.png");
+    this.load.image("mine", "bomb.png");
   }
 
   create() {

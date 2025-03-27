@@ -8,14 +8,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private currentDirection: string = "down";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, "knight", 32);
+    super(scene, x, y, "knight", 13);
 
     // Add the sprite to the scene
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     // Configure sprite properties
-    this.scale = 2;
+    // this.scale = 2;
     this.setCollideWorldBounds(true);
 
     // Create animations

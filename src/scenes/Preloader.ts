@@ -27,9 +27,9 @@ export class Preloader extends Scene {
     this.load.setPath("assets");
 
     this.load.image("logo", "mineslogo.png");
-    this.load.spritesheet("knight", "Knight_10.png", {
-      frameWidth: 32,
-      frameHeight: 32,
+    this.load.spritesheet("knight", "Knight_64.png", {
+      frameWidth: 64,
+      frameHeight: 64,
     });
 
     // Attribution: "Designed by 0melapics / Freepik"

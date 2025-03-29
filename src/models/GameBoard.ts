@@ -222,7 +222,11 @@ class GameBoard extends Phaser.GameObjects.Container {
       return;
     }
     const cell = this.grid[x][y];
-    if (cell.cellState === CellState.REVEALED) {
+    if (
+      cell.cellState === CellState.REVEALED ||
+      cell.contains === CellContent.WALL ||
+      cell.contains === CellContent.EXIT
+    ) {
       return;
     }
     cell.cellState = CellState.REVEALED;

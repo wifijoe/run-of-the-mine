@@ -1,14 +1,17 @@
+import Board from "./Board";
 import Cell, { CellContent, CellState } from "./Cell";
 
-class GameBoard extends Phaser.GameObjects.Container {
+class GameBoard extends Board {
+  /* Properties from Board.ts
   grid: Cell[][];
-  numberOfMines: number;
-  cellWidth: number;
-  cellHeight: number;
   boardWidth: number;
   boardHeight: number;
-  gameOver: boolean = false;
+  cellWidth: number;
+  cellHeight: number;
   playerPosition: [number, number];
+  */
+  numberOfMines: number;
+  gameOver: boolean = false;
   entranceDirection: Compass;
   constructor(
     scene: Phaser.Scene,
@@ -20,7 +23,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellHeight: number,
     entranceDirection: Compass //
   ) {
-    super(scene, x, y);
+    super(scene, x, y, width, height, cellWidth, cellHeight);
     this.grid = [];
     this.numberOfMines = 0;
     this.cellWidth = cellWidth;
@@ -261,6 +264,36 @@ class GameBoard extends Phaser.GameObjects.Container {
     if (cell.cellState === CellState.HIDDEN) {
       cell.cellState = CellState.VISIBLE;
       cell.updateAppearance();
+    }
+  }
+
+  clickCell(cell: Cell, pointer: Phaser.Input.Pointer) {
+    if (pointer.button === 0) {
+      if (
+        cell.cellState != CellState.HIDDEN &&
+        cell.cellState != CellState.FLAGGED
+      ) {
+        // hidden cells are unclickable
+        if (cell.contains === CellContent.WALL) {
+          return; // Don't do anything if the cell is a wall
+        } else if (cell.contains === CellContent.EXIT) {
+          this.winLevel();
+          return;
+        } else if (cell.contains === CellContent.HAZARD) {
+          cell.cellState = CellState.REVEALED;
+          this.loseGame();
+        } else {
+          this.revealCell(cell.getGridX(), cell.getGridY());
+        }
+      }
+    } else if (pointer.button === 2) {
+      if (cell.cellState == CellState.FLAGGED) {
+        cell.cellState = CellState.VISIBLE;
+      } else if (cell.cellState == CellState.VISIBLE) {
+        cell.cellState = CellState.FLAGGED;
+      } else if (cell.cellState == CellState.REVEALED) {
+        //todo: place a bomb
+      }
     }
   }
 

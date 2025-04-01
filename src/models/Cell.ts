@@ -9,6 +9,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
   image: Phaser.GameObjects.Image;
   imageName: string;
   exitImageName: string;
+  flagImage: Phaser.GameObjects.Image | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -70,13 +71,15 @@ class Cell extends Phaser.GameObjects.Rectangle {
         }
       } else if (pointer.button === 2) {
         if (this.cellState == CellState.FLAGGED) {
-          this.cellState = CellState.VISIBLE;
-        } else if (this.cellState == CellState.VISIBLE) {
+          this.cellState = CellState.HIDDEN;
+        } else if (this.cellState == CellState.VISIBLE || this.cellState == CellState.HIDDEN) {
           this.cellState = CellState.FLAGGED;
         } else if (this.cellState == CellState.REVEALED) {
           //todo: place a bomb
         }
       }
+
+      this.update();
     });
   }
 
@@ -85,11 +88,16 @@ class Cell extends Phaser.GameObjects.Rectangle {
   }
 
   updateAppearance() {
+    if (this.flagImage) {
+      this.flagImage.destroy();
+    }
+
     const bounds = this.getBounds(); // Get world bounds of the cell
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
-      this.setFillStyle(0xffff00); // whatever color this is for flagged cells
+      this.flagImage = this.scene.add.image(this.x + 192, this.y + 64, 'flag');
+      this.flagImage.setScale(0.0157);
     } else if (this.contains === CellContent.WALL) {
       // revealed/visible doesn't
       this.setFillStyle(0x000000); // Black          // matter for walls or exit

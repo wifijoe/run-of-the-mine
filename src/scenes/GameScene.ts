@@ -19,12 +19,7 @@ class GameScene extends Phaser.Scene {
   barY!: number;
   countdownEvent!: Phaser.Time.TimerEvent;
 
-  isFlagMode: boolean = false;
-  maxFlags: number = 20;
-  remainingFlags: number = 20;
-  flagText!: Phaser.GameObjects.Text;
   modeText!: Phaser.GameObjects.Text;
-  flagButton!: Phaser.GameObjects.Rectangle;
   basicDifficulty = [0, 0, 0]; // size, time, mine density
 
   private keydownListener: (event: KeyboardEvent) => void;
@@ -84,7 +79,7 @@ class GameScene extends Phaser.Scene {
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
-  }
+  } 
 
   resetLevel() {
     this.gameOver = false;
@@ -103,9 +98,6 @@ class GameScene extends Phaser.Scene {
     // Reset other game objects
     if (this.scoreText) {
       this.scoreText.setText("Score: 0");
-    }
-    if (this.flagText) {
-      this.flagText.setText(`Flags: ${this.remainingFlags}`);
     }
 
     // Create new Level
@@ -182,13 +174,6 @@ class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
-
-    // Flags remaining display, currently not synced with anything
-    this.flagText = this.add.text(40, 70, `Flags: ${this.remainingFlags}`, {
-      fontSize: "24px",
-      color: "#ffffff",
-      fontFamily: '"Orbitron", sans-serif',
-    });
   }
 
   nextLevel() {
@@ -209,9 +194,7 @@ class GameScene extends Phaser.Scene {
     if (this.scoreText) {
       this.scoreText.setText("Score: 0");
     }
-    if (this.flagText) {
-      this.flagText.setText(`Flags: ${this.remainingFlags}`);
-    } */
+    */
 
     // Create new Level
     const cellSize = 32;
@@ -287,13 +270,6 @@ class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
-
-    // Flags remaining display, currently not synced with anything
-    this.flagText = this.add.text(40, 70, `Flags: ${this.remainingFlags}`, {
-      fontSize: "24px",
-      color: "#ffffff",
-      fontFamily: '"Orbitron", sans-serif',
-    });
   }
 
   updateScore(points: number) {
@@ -307,6 +283,7 @@ class GameScene extends Phaser.Scene {
     if (this.timeLeft <= 0) {
       this.timeLeft = 0;
       this.stopTimer();
+      this.scene.start("GameOver");
     }
 
     this.updateTimerBar();
@@ -332,10 +309,6 @@ class GameScene extends Phaser.Scene {
     if (this.countdownEvent) {
       this.countdownEvent.remove();
     }
-  }
-
-  levelCompleted() {
-    // Reset board for new level
   }
 }
 

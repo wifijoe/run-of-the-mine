@@ -32,6 +32,9 @@ export class Preloader extends Scene {
       frameHeight: 32,
     });
 
+    // this.load.image("flag", "flag.webp");
+    this.load.image("flag", "Minesweeper_flag.svg.png");
+
     // Attribution: "Designed by 0melapics / Freepik"
     this.load.image("dirt", "dirt.jpg");
     this.load.image("exit", "tiles/exit.png");

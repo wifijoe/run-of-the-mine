@@ -1,12 +1,11 @@
 import { Boot } from "./scenes/Boot";
-// import { Game as MainGame } from "./scenes/Game";
 import { GameOver } from "./scenes/GameOver";
+import { GridEngine } from "grid-engine";
 import { MainMenu } from "./scenes/MainMenu";
 import { Preloader } from "./scenes/Preloader";
-import Phaser from "phaser";
+import Phaser, { Game, Types } from "phaser";
 import GameScene from "./scenes/GameScene";
 
-import { Game, Types } from "phaser";
 import { TestSprite } from "./scenes/TestSprite";
 
 const config: Types.Core.GameConfig = {
@@ -17,15 +16,15 @@ const config: Types.Core.GameConfig = {
   backgroundColor: "#028af8",
   disableContextMenu: true, // to allow right-clicks on the board
 
-  // plugins: {
-  //   scene: [
-  //     {
-  //       key: "gridEngine",
-  //       plugin: GridEngine,
-  //       mapping: "gridEngine",
-  //     },
-  //   ],
-  // },
+  plugins: {
+    scene: [
+      {
+        key: "gridEngine",
+        plugin: GridEngine,
+        mapping: "gridEngine",
+      },
+    ],
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

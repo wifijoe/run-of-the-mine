@@ -32,7 +32,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.width = width;
     this.height = height;
 
-    //todo: put the player in the revealed space by the entrance of the board
+    //TODO: put the player in the revealed space by the entrance of the board
     this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
 
     this.setSize(width * cellWidth, height * cellHeight);
@@ -154,8 +154,8 @@ class GameBoard extends Phaser.GameObjects.Container {
       startCell.getBoundsX(),
       startCell.getBoundsY()
     );
-    this.playerPosition = [startX!, startY!];
-    this.placeMines(startX!, startY!, 0.15);
+    this.playerPosition = [startX, startY];
+    this.placeMines(startX, startY, 0.15);
     this.calculateAdjacentMines();
     this.scene.add.existing(this.player);
     // this.movePlayer(startX, startY);
@@ -324,22 +324,143 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Moves the player to the specified grid coordinates
-   * @param x X coordinate in the grid
-   * @param y Y coordinate in the grid
+   * Finds the nearest revealed cell to the target coordinates
+   * @param targetX Target X coordinate
+   * @param targetY Target Y coordinate
+   * @returns Array of [x, y] coordinates for the path to the nearest revealed cell
    */
-  movePlayer(x: number, y: number) {
-    // Calculate pixel coordinates
-    // const pixelX = x * this.cellWidth;
-    // const pixelY = y * this.cellHeight;
+  private findNearestRevealedCell(
+    targetX: number,
+    targetY: number
+  ): [number, number][] {
+    const visited = new Set<string>();
+    const queue: [number, number][] = [[targetX, targetY]];
+    const parent = new Map<string, [number, number]>();
 
-    // Update player position
-    this.player.x = x;
-    this.player.y = y;
+    while (queue.length > 0) {
+      const [x, y] = queue.shift()!;
+      const key = `${x},${y}`;
 
-    // Update player position tracking
-    console.log("Player moved to: ", x, y);
-    this.playerPosition = [x, y];
+      if (visited.has(key)) continue;
+      visited.add(key);
+
+      // Check if this cell is revealed
+      if (this.grid[x][y].cellState === CellState.REVEALED) {
+        // Reconstruct path
+        const path: [number, number][] = [];
+        let current: [number, number] = [x, y];
+        while (parent.has(`${current[0]},${current[1]}`)) {
+          path.unshift(current);
+          current = parent.get(`${current[0]},${current[1]}`)!;
+        }
+        path.unshift(current);
+        return path;
+      }
+
+      // Add adjacent cells to queue
+      const directions = [
+        [0, 1],
+        [1, 0],
+        [0, -1],
+        [-1, 0],
+      ]; // down, right, up, left
+      for (const [dx, dy] of directions) {
+        const newX = x + dx;
+        const newY = y + dy;
+
+        if (
+          newX >= 0 &&
+          newX < this.boardWidth &&
+          newY >= 0 &&
+          newY < this.boardHeight
+        ) {
+          const newKey = `${newX},${newY}`;
+          if (!visited.has(newKey)) {
+            queue.push([newX, newY]);
+            parent.set(newKey, [x, y]);
+          }
+        }
+      }
+    }
+
+    return []; // No path found
+  }
+
+  /**
+   * Moves the player to the specified coordinates with animation
+   * @param targetX Target X coordinate in pixels
+   * @param targetY Target Y coordinate in pixels
+   */
+  movePlayer(targetX: number, targetY: number) {
+    const targetGridX = Math.floor((targetX - this.x) / this.cellWidth);
+    const targetGridY = Math.floor((targetY - this.y) / this.cellHeight);
+
+    // Find path to nearest revealed cell
+    const path = this.findNearestRevealedCell(targetGridX, targetGridY);
+    if (path.length === 0) return; // No valid path found
+
+    // Animate movement along the path
+    let currentStep = 0;
+    const moveStep = () => {
+      if (currentStep >= path.length) return;
+
+      const [x, y] = path[currentStep];
+      const pixelX = this.x + x * this.cellWidth + this.cellWidth / 2;
+      const pixelY = this.y + y * this.cellHeight + this.cellHeight / 2;
+
+      // Calculate direction for animation
+      const prevX =
+        currentStep > 0 ? path[currentStep - 1][0] : this.playerPosition[0];
+      const prevY =
+        currentStep > 0 ? path[currentStep - 1][1] : this.playerPosition[1];
+      const direction = this.getDirection(prevX, prevY, x, y);
+
+      // Play walking animation
+      this.player.anims.play(direction, true);
+
+      // Create tween for grid-based movement
+      this.scene.tweens.add({
+        targets: this.player,
+        x: pixelX,
+        y: pixelY,
+        duration: 300,
+        ease: "Linear",
+        onComplete: () => {
+          currentStep++;
+          if (currentStep < path.length) {
+            moveStep();
+          } else {
+            // Update final position
+            this.playerPosition = [x, y];
+            this.player.anims.play(`idle_${direction}`);
+          }
+        },
+      });
+    };
+
+    // Start from the player's current position
+    const [startX, startY] = this.playerPosition;
+    const startPixelX = this.x + startX * this.cellWidth + this.cellWidth / 2;
+    const startPixelY = this.y + startY * this.cellHeight + this.cellHeight / 2;
+    this.player.x = startPixelX;
+    this.player.y = startPixelY;
+
+    moveStep();
+  }
+
+  /**
+   * Gets the animation direction based on movement
+   */
+  private getDirection(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number
+  ): string {
+    if (toY > fromY) return "down";
+    if (toY < fromY) return "up";
+    if (toX > fromX) return "right";
+    return "left";
   }
 }
 

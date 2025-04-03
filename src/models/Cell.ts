@@ -56,23 +56,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
           this.cellState != CellState.HIDDEN &&
           this.cellState != CellState.FLAGGED
         ) {
-          // hidden cells are unclickable
-          if (this.contains === CellContent.WALL) {
-            return; // Don't do anything if the cell is a wall
-          } else if (this.contains === CellContent.EXIT) {
-            this.board.winLevel();
-            return;
-          } else if (this.contains === CellContent.HAZARD) {
-            this.cellState = CellState.REVEALED;
-            this.board.loseGame();
-          } else {
-            // the cell is empty
-            if (this.cellState === CellState.REVEALED) {
-              this.board.movePlayer(bounds.centerX, bounds.centerY);
-            } else {
-              this.board.revealCell(this.getGridX(), this.getGridY());
-            }
-          }
+          this.handleCellContent(bounds);
         }
       } else if (pointer.button === 2) {
         if (this.cellState == CellState.FLAGGED) {
@@ -80,9 +64,10 @@ class Cell extends Phaser.GameObjects.Rectangle {
         } else if (this.cellState == CellState.VISIBLE) {
           this.cellState = CellState.FLAGGED;
         } else if (this.cellState == CellState.REVEALED) {
-          //todo: place a bomb
+          //TODO: place a bomb
         }
       }
+      this.updateAppearance();
     });
   }
 
@@ -90,12 +75,16 @@ class Cell extends Phaser.GameObjects.Rectangle {
     this.updateAppearance();
   }
 
+  /**
+   * Updates the appearance of the cell based on its state and content.
+   */
   updateAppearance() {
     const bounds = this.getBounds(); // Get world bounds of the cell
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
       this.image = this.scene.add.image(bounds.centerX, bounds.centerY, "flag");
+      this.image.setToTop();
       // whatever color this is for flagged cells
     } else if (this.contains === CellContent.WALL) {
       // revealed/visible doesn't
@@ -122,7 +111,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
         this.imageName + "_tan"
       );
       if (this.adjacentMines > 0) {
-        //todo: bug here (I think). If already-revealed cell is updated, the number disapears. I *think* the if block below fails and so the text is not updated, leading to it being behind the cell's image.
+        //TODO: bug here (I think). If already-revealed cell is updated, the number disapears. I *think* the if block below fails and so the text is not updated, leading to it being behind the cell's image.
         if (!this.textOfCell) {
           this.textOfCell = this.scene.add.text(
             bounds.centerX, // World X position
@@ -142,6 +131,26 @@ class Cell extends Phaser.GameObjects.Rectangle {
       }
     } else if (this.contains === CellContent.HAZARD) {
       this.image = this.scene.add.image(bounds.centerX, bounds.centerY, "mine");
+    }
+  }
+
+  /**
+   * Handles the content of the cell based on its state and content.
+   * @param bounds The bounds of the cell.
+   */
+  private handleCellContent(bounds: Phaser.Geom.Rectangle): void {
+    if (this.contains === CellContent.WALL) {
+      return; // Don't do anything if the cell is a wall
+    } else if (this.contains === CellContent.EXIT) {
+      this.board.winLevel();
+      return;
+    } else if (this.contains === CellContent.HAZARD) {
+      this.cellState = CellState.REVEALED;
+      this.board.loseGame();
+    } else if (this.cellState === CellState.REVEALED) {
+      this.board.movePlayer(bounds.centerX, bounds.centerY);
+    } else {
+      this.board.revealCell(this.getGridX(), this.getGridY());
     }
   }
 

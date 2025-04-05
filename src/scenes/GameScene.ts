@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Level from "../models/Level";
+import GridEngine, { GridEngineConfig } from "grid-engine";
 
 class GameScene extends Phaser.Scene {
   private level: Level;
@@ -134,6 +135,7 @@ class GameScene extends Phaser.Scene {
       0
     );
     this.add.existing(this.level.board);
+
     this.level.startLevel();
 
     // Center

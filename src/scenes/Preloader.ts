@@ -33,6 +33,8 @@ export class Preloader extends Scene {
     });
 
     // Attribution: "Designed by 0melapics / Freepik"
+    this.load.image("minesweeper_tiles", "tiles/tileset.png");
+    this.load.tilemapTiledJSON("minesweeper_map", "tiles/runOfTheMine.json");
     this.load.image("dirt", "dirt.jpg");
     this.load.image("exit", "tiles/exit.png");
     this.load.image("blank_brown", "tiles/blank_brown.png");
@@ -51,8 +53,8 @@ export class Preloader extends Scene {
     this.load.image("exit_right_top", "tiles/exit_right_top.png");
     this.load.image("exit_right_bottom", "tiles/exit_right_bottom.png");
 
-    this.load.image("flag", "flag.png");
-    this.load.image("mine", "bomb.png");
+    this.load.image("flag", "tiles/flag.png");
+    this.load.image("mine", "tiles/bomb.png");
   }
 
   create() {

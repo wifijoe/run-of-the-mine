@@ -15,7 +15,6 @@ const config: Types.Core.GameConfig = {
   parent: "game-container",
   backgroundColor: "#028af8",
   disableContextMenu: true, // to allow right-clicks on the board
-
   plugins: {
     scene: [
       {
@@ -26,7 +25,7 @@ const config: Types.Core.GameConfig = {
     ],
   },
   scale: {
-    mode: Phaser.Scale.FIT,
+    // mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   physics: {

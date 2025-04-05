@@ -1,8 +1,11 @@
-import Cell, { CellContent, CellState } from "./Cell";
+import Cell, { CellContent, CellState, TileIndices } from "./Cell";
 import { Player } from "./Player";
-
+import { Pathfinder } from "./Pathfinder";
+import { GridEngine, GridEngineConfig } from "grid-engine";
 class GameBoard extends Phaser.GameObjects.Container {
-  grid: Cell[][];
+  tilemap: Phaser.Tilemaps.Tilemap;
+  tileLayer: Phaser.Tilemaps.TilemapLayer;
+  cells: Cell[][];
   numberOfMines: number;
   cellWidth: number;
   cellHeight: number;
@@ -12,6 +15,9 @@ class GameBoard extends Phaser.GameObjects.Container {
   playerPosition: [number, number];
   player: Player;
   entranceDirection: Compass;
+
+  private readonly pathfinder: Pathfinder;
+
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -23,7 +29,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     entranceDirection: Compass
   ) {
     super(scene, x, y);
-    this.grid = [];
+    this.cells = [];
     this.numberOfMines = 0;
     this.cellWidth = cellWidth;
     this.cellHeight = cellHeight;
@@ -31,17 +37,51 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.boardHeight = height;
     this.width = width;
     this.height = height;
+    this.pathfinder = new Pathfinder(this);
 
-    //TODO: put the player in the revealed space by the entrance of the board
+    // Create the tilemap
+    this.createTilemap();
+
+    // Generate the board with cells
     this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
 
     this.setSize(width * cellWidth, height * cellHeight);
-
     this.setInteractive();
+
+    // Initialize pathfinder
+  }
+
+  createTilemap() {
+    // Create a blank tilemap with the specified dimensions
+    this.tilemap = this.scene.make.tilemap({
+      tileWidth: this.cellWidth,
+      tileHeight: this.cellHeight,
+      width: this.boardWidth,
+      height: this.boardHeight,
+    });
+
+    // Add tileset - you should have a tileset image with all the different types of tiles
+    const tileset = this.tilemap.addTilesetImage("minesweeper_tiles");
+    if (!tileset) {
+      throw new Error("Failed to load tileset");
+    }
+
+    // Create the main layer where all our game tiles will be placed
+    const bounds = this.getBounds();
+    const layer = this.tilemap.createBlankLayer(
+      "main",
+      tileset,
+      bounds.x,
+      bounds.y
+    );
+    if (!layer) {
+      throw new Error("Failed to create tile layer");
+    }
+    this.tileLayer = layer;
   }
 
   /**
-   * Generates a new game board (populates this.grid with cells)
+   * Generates a new game board (populates this.cells with Cell objects)
    */
   generateBoard(
     cellWidth: number,
@@ -51,6 +91,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     entranceDirection: Compass
   ) {
     this.entranceDirection = entranceDirection;
+
     //randomly select four points for the exits/entrance
     const exits = [
       Math.floor(Math.random() * (width - 2)) + 1, // north exit west cell
@@ -59,11 +100,16 @@ class GameBoard extends Phaser.GameObjects.Container {
       Math.floor(Math.random() * (height - 2)) + 1, // west exit north cell
     ];
 
+    // First fill the tilemap with hidden tiles
     for (let i = 0; i < width; i++) {
-      this.grid[i] = [];
+      this.cells[i] = [];
       for (let j = 0; j < height; j++) {
+        // Place a hidden tile at this position
+        const tile = this.tileLayer.putTileAt(TileIndices.HIDDEN, i, j);
+
         let cellContent = CellContent.EMPTY;
         let exitImageName = "";
+
         // Create wall cells around the border
         if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
           cellContent = CellContent.WALL;
@@ -74,7 +120,6 @@ class GameBoard extends Phaser.GameObjects.Container {
             if (entranceDirection != Compass.NORTH) {
               cellContent = CellContent.EXIT;
             }
-            // TODO: get an entrance sprite (collapsed tunnel?) and use in all cases
             if (i === exits[0]) {
               exitImageName = "exit_top_left";
             } else {
@@ -113,21 +158,24 @@ class GameBoard extends Phaser.GameObjects.Container {
           }
         }
 
+        // Create a cell object that wraps the tile
         const cell = new Cell(
           this.scene,
-          i * cellWidth,
-          j * cellHeight,
-          exitImageName,
+          this.x + i * cellWidth + cellWidth,
+          this.y + j * cellHeight + cellHeight,
           cellWidth,
           cellHeight,
+          tile,
+          exitImageName,
           cellContent,
           this
         );
-        this.grid[i][j] = cell;
-        this.add(cell); // Add cell to the container
+
+        this.cells[i][j] = cell;
       }
     }
 
+    // Set player starting position
     let startX, startY: number;
     switch (entranceDirection) {
       case Compass.NORTH:
@@ -147,16 +195,42 @@ class GameBoard extends Phaser.GameObjects.Container {
         startY = exits[3];
         break;
     }
-    const startCell = this.grid[startX][startY];
-    // Place mines, avoiding the edge tiles
+
+    const startCell = this.cells[startX][startY];
+
+    // Place the player
     this.player = new Player(
       this.scene,
-      startCell.getBoundsX(),
-      startCell.getBoundsY()
+      startCell.getBoundsX() + cellWidth / 2,
+      startCell.getBoundsY() + cellHeight / 2
+    );
+    this.scene.cameras.main.startFollow(this.player, true);
+    this.scene.cameras.main.setFollowOffset(
+      -this.player.width / 2,
+      -this.player.height / 2
     );
     this.playerPosition = [startX, startY];
+
+    const gridEngineConfig: GridEngineConfig = {
+      characters: [
+        {
+          id: "player",
+          sprite: this.player,
+          walkingAnimationMapping: 0,
+          startPosition: {
+            x: startX,
+            y: startY,
+          },
+          offsetY: -4,
+        },
+      ],
+    };
+
+    // this.scene.gridEngine.create(this.tilemap, gridEngineConfig);
+    // Place mines
     this.placeMines(startX, startY, 0.15);
     this.calculateAdjacentMines();
+
     this.scene.add.existing(this.player);
     // this.movePlayer(startX, startY);
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
@@ -169,7 +243,9 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param mineDensity density of mines on the board
    */
   placeMines(startX: number, startY: number, mineDensity: number) {
-    this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
+    this.numberOfMines = Math.floor(
+      this.boardWidth * this.boardHeight * mineDensity
+    );
     let minesPlaced = 0;
 
     while (minesPlaced < this.numberOfMines) {
@@ -182,8 +258,9 @@ class GameBoard extends Phaser.GameObjects.Container {
         continue;
       }
 
-      if (this.grid[x][y].contains === CellContent.EMPTY) {
-        this.grid[x][y].contains = CellContent.HAZARD;
+      if (this.cells[x][y].contains === CellContent.EMPTY) {
+        this.cells[x][y].contains = CellContent.HAZARD;
+        this.cells[x][y].tile.properties.contains = CellContent.HAZARD;
         minesPlaced++;
       }
     }
@@ -195,7 +272,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   calculateAdjacentMines() {
     for (let i = 0; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
-        const cell = this.grid[i][j];
+        const cell = this.cells[i][j];
         if (cell.contains === CellContent.HAZARD) {
           continue;
         }
@@ -211,12 +288,13 @@ class GameBoard extends Phaser.GameObjects.Container {
             ) {
               continue;
             }
-            if (this.grid[x][y].contains === CellContent.HAZARD) {
+            if (this.cells[x][y].contains === CellContent.HAZARD) {
               adjacentMines++;
             }
           }
         }
         cell.adjacentMines = adjacentMines;
+        cell.tile.properties.adjacentMines = adjacentMines;
       }
     }
   }
@@ -231,13 +309,18 @@ class GameBoard extends Phaser.GameObjects.Container {
     if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
       return;
     }
-    const cell = this.grid[x][y];
+
+    const cell = this.cells[x][y];
     if (cell.cellState === CellState.REVEALED) {
       return;
     }
+
     cell.cellState = CellState.REVEALED;
+    cell.tile.properties.cellState = CellState.REVEALED;
     cell.updateAppearance();
-    if (cell.adjacentMines === 0) {
+
+    if (cell.adjacentMines === 0 && cell.contains === CellContent.EMPTY) {
+      // If cell has no adjacent mines, reveal all surrounding cells
       this.revealCell(x - 1, y);
       this.revealCell(x + 1, y);
       this.revealCell(x, y - 1);
@@ -247,6 +330,7 @@ class GameBoard extends Phaser.GameObjects.Container {
       this.revealCell(x + 1, y - 1);
       this.revealCell(x + 1, y + 1);
     } else {
+      // Otherwise just set adjacent cells to visible
       this.setCellVisible(x - 1, y);
       this.setCellVisible(x + 1, y);
       this.setCellVisible(x, y - 1);
@@ -263,24 +347,144 @@ class GameBoard extends Phaser.GameObjects.Container {
     if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
       return;
     }
-    const cell = this.grid[x][y];
+
+    const cell = this.cells[x][y];
     if (cell.cellState === CellState.HIDDEN) {
       cell.cellState = CellState.VISIBLE;
+      cell.tile.properties.cellState = CellState.VISIBLE;
       cell.updateAppearance();
     }
   }
 
   /**
    * Reveals all cells (the player selected a mine)
-   *
    */
   revealAllCells() {
     for (let i = 0; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
-        this.grid[i][j].cellState = CellState.REVEALED;
-        this.grid[i][j].updateAppearance();
+        this.cells[i][j].cellState = CellState.REVEALED;
+        this.cells[i][j].tile.properties.cellState = CellState.REVEALED;
+        this.cells[i][j].updateAppearance();
       }
     }
+  }
+
+  /**
+   * Move the player to a specific position
+   * @param x The x-coordinate to move to
+   * @param y The y-coordinate to move to
+   */
+  movePlayer(x: number, y: number) {
+    // Convert to grid coordinates if they're world coordinates
+    let gridX = x,
+      gridY = y;
+
+    if (x >= this.cellWidth || y >= this.cellHeight) {
+      gridX = Math.floor(x / this.cellWidth);
+      gridY = Math.floor(y / this.cellHeight);
+    }
+
+    // Check if position is valid
+    if (
+      gridX < 0 ||
+      gridX >= this.boardWidth ||
+      gridY < 0 ||
+      gridY >= this.boardHeight
+    ) {
+      return;
+    }
+
+    const cell = this.cells[gridX][gridY];
+
+    // Check if the destination is walkable
+    if (cell.contains === CellContent.WALL) {
+      return;
+    }
+
+    // Check for hazard
+    if (cell.contains === CellContent.HAZARD) {
+      this.loseGame();
+      return;
+    }
+
+    // Check for exit
+    if (cell.contains === CellContent.EXIT) {
+      this.winLevel();
+      return;
+    }
+
+    // Find path to target using pathfinder
+    const path = this.pathfinder.findPath(
+      this.playerPosition[0],
+      this.playerPosition[1],
+      gridX,
+      gridY
+    );
+    if (path.length === 0) return;
+
+    // Animate movement along path
+    this.animateMovement(path);
+  }
+
+  /**
+   * Animate player movement along a path
+   * @param path Array of [x,y] coordinates to move through
+   */
+  private animateMovement(path: [number, number][]) {
+    // Remove first position (current position)
+    path.shift();
+
+    // Create a tween for each step in the path
+    path.forEach(([x, y], index) => {
+      const cell = this.cells[x][y];
+      const centerX = cell.getBoundsX();
+      const centerY = cell.getBoundsY();
+
+      // Calculate direction for animation
+      const prevX = index === 0 ? this.playerPosition[0] : path[index - 1][0];
+      const prevY = index === 0 ? this.playerPosition[1] : path[index - 1][1];
+      const direction = this.getDirection(prevX, prevY, x, y);
+
+      // // Create tween
+      // this.scene.tweens.add({
+      //   targets: this.player,
+      //   x: centerX,
+      //   y: centerY,
+      //   duration: 200,
+      //   onStart: () => {
+      //     this.player.anims.play(direction, true);
+      //   },
+      //   onComplete: () => {
+      //     // Update player position
+      //     this.playerPosition = [x, y];
+      //     this.player.x = centerX;
+      //     this.player.y = centerY;
+      //     // Play idle animation when movement is complete
+      //     if (index === path.length - 1) {
+      //       this.player.anims.play(`idle_${direction}`, true);
+      //     }
+      //   },
+      // });
+      this.scene.gridEngine.moveTo("player", {
+        x: centerX,
+        y: centerY,
+      });
+    });
+  }
+
+  /**
+   * Get the direction string for animation based on movement
+   */
+  private getDirection(
+    prevX: number,
+    prevY: number,
+    nextX: number,
+    nextY: number
+  ): string {
+    if (nextX > prevX) return "right";
+    if (nextX < prevX) return "left";
+    if (nextY > prevY) return "down";
+    return "up";
   }
 
   loseGame() {
@@ -292,12 +496,6 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.removeInteractive();
     this.gameOver = true;
 
-    // Disable interaction on each cell
-    for (let i = 0; i < this.boardWidth; i++) {
-      for (let j = 0; j < this.boardHeight; j++) {
-        this.grid[i][j].disableInteractive();
-      }
-    }
     this.scene.events.emit("gameOver");
   }
 
@@ -309,12 +507,6 @@ class GameBoard extends Phaser.GameObjects.Container {
     });
     this.removeInteractive();
     this.gameOver = true;
-    // Disable interaction on each cell
-    for (let i = 0; i < this.boardWidth; i++) {
-      for (let j = 0; j < this.boardHeight; j++) {
-        this.grid[i][j].disableInteractive();
-      }
-    }
 
     this.scene.events.emit("levelComplete");
   }
@@ -323,151 +515,26 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.revealCell(this.playerPosition[0], this.playerPosition[1]);
   }
 
-  /**
-   * Finds the nearest revealed cell to the target coordinates
-   * @param targetX Target X coordinate
-   * @param targetY Target Y coordinate
-   * @returns Array of [x, y] coordinates for the path to the nearest revealed cell
-   */
-  private findNearestRevealedCell(
-    targetX: number,
-    targetY: number
-  ): [number, number][] {
-    const visited = new Set<string>();
-    const queue: [number, number][] = [[targetX, targetY]];
-    const parent = new Map<string, [number, number]>();
-
-    while (queue.length > 0) {
-      const [x, y] = queue.shift()!;
-      const key = `${x},${y}`;
-
-      if (visited.has(key)) continue;
-      visited.add(key);
-
-      // Check if this cell is revealed
-      if (this.grid[x][y].cellState === CellState.REVEALED) {
-        // Reconstruct path
-        const path: [number, number][] = [];
-        let current: [number, number] = [x, y];
-        while (parent.has(`${current[0]},${current[1]}`)) {
-          path.unshift(current);
-          current = parent.get(`${current[0]},${current[1]}`)!;
-        }
-        path.unshift(current);
-        return path;
-      }
-
-      // Add adjacent cells to queue
-      const directions = [
-        [0, 1],
-        [1, 0],
-        [0, -1],
-        [-1, 0],
-      ]; // down, right, up, left
-      for (const [dx, dy] of directions) {
-        const newX = x + dx;
-        const newY = y + dy;
-
-        if (
-          newX >= 0 &&
-          newX < this.boardWidth &&
-          newY >= 0 &&
-          newY < this.boardHeight
-        ) {
-          const newKey = `${newX},${newY}`;
-          if (!visited.has(newKey)) {
-            queue.push([newX, newY]);
-            parent.set(newKey, [x, y]);
-          }
-        }
+  // Clean up resources when board is destroyed
+  destroy() {
+    // Clean up all cell resources
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.cells[i]?.[j]?.destroy();
       }
     }
 
-    return []; // No path found
-  }
-
-  /**
-   * Moves the player to the specified coordinates with animation
-   * @param targetX Target X coordinate in pixels
-   * @param targetY Target Y coordinate in pixels
-   */
-  movePlayer(targetX: number, targetY: number) {
-    const targetGridX = Math.floor((targetX - this.x) / this.cellWidth);
-    const targetGridY = Math.floor((targetY - this.y) / this.cellHeight);
-
-    // Find path to nearest revealed cell
-    const path = this.findNearestRevealedCell(targetGridX, targetGridY);
-    if (path.length === 0) return; // No valid path found
-
-    // Animate movement along the path
-    let currentStep = 0;
-    const moveStep = () => {
-      if (currentStep >= path.length) return;
-
-      const [x, y] = path[currentStep];
-      const pixelX = this.x + x * this.cellWidth + this.cellWidth / 2;
-      const pixelY = this.y + y * this.cellHeight + this.cellHeight / 2;
-
-      // Calculate direction for animation
-      const prevX =
-        currentStep > 0 ? path[currentStep - 1][0] : this.playerPosition[0];
-      const prevY =
-        currentStep > 0 ? path[currentStep - 1][1] : this.playerPosition[1];
-      const direction = this.getDirection(prevX, prevY, x, y);
-
-      // Play walking animation
-      this.player.anims.play(direction, true);
-
-      // Create tween for grid-based movement
-      this.scene.tweens.add({
-        targets: this.player,
-        x: pixelX,
-        y: pixelY,
-        duration: 300,
-        ease: "Linear",
-        onComplete: () => {
-          currentStep++;
-          if (currentStep < path.length) {
-            moveStep();
-          } else {
-            // Update final position
-            this.playerPosition = [x, y];
-            this.player.anims.play(`idle_${direction}`);
-          }
-        },
-      });
-    };
-
-    // Start from the player's current position
-    const [startX, startY] = this.playerPosition;
-    const startPixelX = this.x + startX * this.cellWidth + this.cellWidth / 2;
-    const startPixelY = this.y + startY * this.cellHeight + this.cellHeight / 2;
-    this.player.x = startPixelX;
-    this.player.y = startPixelY;
-
-    moveStep();
-  }
-
-  /**
-   * Gets the animation direction based on movement
-   */
-  private getDirection(
-    fromX: number,
-    fromY: number,
-    toX: number,
-    toY: number
-  ): string {
-    if (toY > fromY) return "down";
-    if (toY < fromY) return "up";
-    if (toX > fromX) return "right";
-    return "left";
+    // Call the parent's destroy method
+    super.destroy();
   }
 }
 
+// Add this if it doesn't exist elsewhere
 export enum Compass {
   NORTH,
   EAST,
   SOUTH,
   WEST,
 }
+
 export default GameBoard;

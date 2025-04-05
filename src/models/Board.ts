@@ -26,7 +26,7 @@ abstract class Board extends Phaser.GameObjects.Container {
     this.width = width;
     this.height = height;
 
-    this.setSize(width * cellWidth, height * cellHeight);
+    // this.setSize(width * cellWidth, height * cellHeight);
     this.setInteractive();
   }
 

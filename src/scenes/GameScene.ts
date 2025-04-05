@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import Level from "../models/Level";
+import ShopBoard from "../models/ShopBoard";
 
 class GameScene extends Phaser.Scene {
   private level: Level;
+  private shop: ShopBoard;
   gameEndText: Phaser.GameObjects.Text;
   gameOver: boolean = false;
 
@@ -18,6 +20,7 @@ class GameScene extends Phaser.Scene {
   barX!: number;
   barY!: number;
   countdownEvent!: Phaser.Time.TimerEvent;
+  CELL_SIZE: number = 32; // Size of each cell in pixels
 
   isFlagMode: boolean = false;
   maxFlags: number = 20;
@@ -79,11 +82,59 @@ class GameScene extends Phaser.Scene {
       this.keydownListener = (event: KeyboardEvent) => {
         if (event.key === "n" || event.key === "N") {
           this.basicDifficulty[0] += 1; // todo: make difficulty increase random
-          this.nextLevel();
+          this.enterShop();
+          // this.nextLevel();
         }
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
+  }
+
+  enterShop() {
+    const boardWidth = 20;
+
+    this.add.image(0, 0, "dirt").setOrigin(0, 0);
+
+    this.gameOver = false;
+    if (this.level) {
+      this.level.board.destroy();
+    }
+
+    // Remove other game objects
+    if (this.gameEndText) {
+      this.gameEndText.destroy();
+    }
+
+    if (this.timerBar) {
+      this.timerBar.clear();
+    }
+    if (this.outlineBar) {
+      this.outlineBar.clear();
+    }
+    if (this.countdownEvent) {
+      this.countdownEvent.remove();
+    }
+
+    // Remove the event listener
+    this.input.keyboard?.off("keydown", this.keydownListener);
+
+    const x =
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
+    const y =
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
+
+    this.shop = new ShopBoard(
+      this,
+      x,
+      y,
+      boardWidth,
+      boardWidth,
+      this.CELL_SIZE,
+      this.CELL_SIZE
+    );
+    this.add.existing(this.shop);
   }
 
   resetLevel() {
@@ -109,15 +160,16 @@ class GameScene extends Phaser.Scene {
     }
 
     // Create new Level
-    const cellSize = 32;
     const boardWidth = 20;
 
     this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
-      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
     const y =
-      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
 
     this.level = new Level(
       this,
@@ -125,8 +177,8 @@ class GameScene extends Phaser.Scene {
       y,
       boardWidth,
       boardWidth,
-      cellSize,
-      cellSize,
+      this.CELL_SIZE,
+      this.CELL_SIZE,
       0
     );
     this.add.existing(this.level.board);
@@ -192,18 +244,18 @@ class GameScene extends Phaser.Scene {
   }
 
   nextLevel() {
-    this.gameOver = false;
-    if (this.level) {
-      this.level.board.destroy();
-    }
+    // this.gameOver = false;
+    // if (this.level) {
+    //   this.level.board.destroy();
+    // }
 
-    // Remove other game objects
-    if (this.gameEndText) {
-      this.gameEndText.destroy();
-    }
+    // // Remove other game objects
+    // if (this.gameEndText) {
+    //   this.gameEndText.destroy();
+    // }
 
-    // Remove the event listener
-    this.input.keyboard?.off("keydown", this.keydownListener);
+    // // Remove the event listener
+    // this.input.keyboard?.off("keydown", this.keydownListener);
 
     /*   // Reset other game objects
     if (this.scoreText) {
@@ -214,15 +266,16 @@ class GameScene extends Phaser.Scene {
     } */
 
     // Create new Level
-    const cellSize = 32;
     const boardWidth = 20 + this.basicDifficulty[0];
 
     this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
-      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
     const y =
-      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
 
     this.level = new Level(
       this,
@@ -230,8 +283,8 @@ class GameScene extends Phaser.Scene {
       y,
       boardWidth,
       boardWidth,
-      cellSize,
-      cellSize,
+      this.CELL_SIZE,
+      this.CELL_SIZE,
       0
     );
     this.add.existing(this.level.board);

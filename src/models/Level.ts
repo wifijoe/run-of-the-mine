@@ -1,6 +1,12 @@
 import GameBoard, { Compass } from "./GameBoard";
 
 class Level {
+  revealRandomMines(arg0: number) {
+    throw new Error("Method not implemented.");
+  }
+  createSafePath(arg0: number) {
+    throw new Error("Method not implemented.");
+  }
   board: GameBoard;
   timePlayed: number;
   points: number;

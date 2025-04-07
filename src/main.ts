@@ -11,10 +11,11 @@ import { TestSprite } from "./scenes/TestSprite";
 
 const config: Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1024,
-  height: 768,
+  width: window.innerWidth * window.devicePixelRatio,
+  height: window.innerHeight * window.devicePixelRatio,
   parent: "game-container",
   backgroundColor: "#028af8",
+  roundPixels: true,
   disableContextMenu: true, // to allow right-clicks on the board
 
   // plugins: {

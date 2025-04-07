@@ -9,7 +9,6 @@ class Cell extends Phaser.GameObjects.Rectangle {
   image: Phaser.GameObjects.Image;
   imageName: string;
   exitImageName: string;
-  flagImage: Phaser.GameObjects.Image | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -70,9 +69,9 @@ class Cell extends Phaser.GameObjects.Rectangle {
           }
         }
       } else if (pointer.button === 2) {
-        if (this.cellState == CellState.FLAGGED) {
-          this.cellState = CellState.HIDDEN;
-        } else if (this.cellState == CellState.VISIBLE || this.cellState == CellState.HIDDEN) {
+        if (this.cellState === CellState.FLAGGED) {
+          this.cellState = CellState.VISIBLE;
+        } else if (this.cellState === CellState.VISIBLE) {
           this.cellState = CellState.FLAGGED;
         } else if (this.cellState == CellState.REVEALED) {
           //todo: place a bomb
@@ -88,62 +87,78 @@ class Cell extends Phaser.GameObjects.Rectangle {
   }
 
   updateAppearance() {
-    if (this.flagImage) {
-      this.flagImage.destroy();
-    }
-
     const bounds = this.getBounds(); // Get world bounds of the cell
+
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
-    } else if (this.cellState === CellState.FLAGGED) {
-      this.flagImage = this.scene.add.image(this.x + 192, this.y + 64, 'flag');
-      this.flagImage.setScale(0.0157);
-    } else if (this.contains === CellContent.WALL) {
-      // revealed/visible doesn't
-      this.setFillStyle(0x000000); // Black          // matter for walls or exit
-    } else if (this.contains === CellContent.EXIT) {
-      this.image = this.scene.add.image(
-        bounds.centerX,
-        bounds.centerY,
-        this.exitImageName
-      );
-    } else if (this.cellState === CellState.VISIBLE) {
-      this.image = this.scene.add.image(
-        bounds.centerX,
-        bounds.centerY,
-        this.imageName + "_brown"
-      );
-      this.image.setToTop();
-    } else if (this.contains === CellContent.EMPTY) {
-      // all branches from here are revealed
-      this.setFillStyle(0xffffff);
-      const bounds = this.getBounds(); // Get world bounds of the cell
-      this.image = this.scene.add.image(
-        bounds.centerX,
-        bounds.centerY,
-        this.imageName + "_tan"
-      );
-      if (this.adjacentMines > 0) {
-        //todo: bug here (I think). If already-revealed cell is updated, the number disapears. I *think* the if block below fails and so the text is not updated, leading to it being behind the cell's image.
-        if (!this.textOfCell) {
-          this.textOfCell = this.scene.add.text(
-            bounds.centerX, // World X position
-            bounds.centerY, // World Y position
-            this.adjacentMines.toString(),
-            {
-              fontSize: "20px",
-              color: "#000000",
-            }
-          );
 
-          this.textOfCell.setOrigin(0.5); // Center the text inside the cell
-          this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
-        } else {
-          this.textOfCell.setAbove(this.image);
-        }
+    } else if (this.cellState === CellState.VISIBLE) {
+      if (this.contains === CellContent.WALL) {
+        this.setFillStyle(0x000000); // Black          // matter for walls or exit
+      } else if (this.contains === CellContent.EXIT) {
+        this.image = this.scene.add.image(
+          bounds.centerX,
+          bounds.centerY,
+          this.exitImageName
+        );
+      } else {
+        this.image = this.scene.add.image(
+          bounds.centerX,
+          bounds.centerY,
+          this.imageName + "_brown"
+        );
+        this.image.setToTop();
       }
-    } else if (this.contains === CellContent.HAZARD) {
-      this.setFillStyle(0xff0000);
+    } else if (this.cellState === CellState.FLAGGED) {
+      this.image = this.scene.add.image(
+        bounds.centerX, 
+        bounds.centerY, 
+        "flag"
+      );
+
+    } else if (this.cellState == CellState.REVEALED) {
+
+      if (this.contains === CellContent.WALL) {
+        this.setFillStyle(0x000000); // Black          // matter for walls or exit
+      } else if (this.contains === CellContent.EXIT) {
+        this.image = this.scene.add.image(
+          bounds.centerX,
+          bounds.centerY,
+          this.exitImageName
+        );
+      } else if (this.contains === CellContent.EMPTY) {
+        // all branches from here are revealed
+        this.setFillStyle(0xffffff);
+        this.image = this.scene.add.image(
+          bounds.centerX,
+          bounds.centerY,
+          this.imageName + "_tan"
+        );
+        if (this.adjacentMines > 0) {
+          //todo: bug here (I think). If already-revealed cell is updated, the number disapears. I *think* the if block below fails and so the text is not updated, leading to it being behind the cell's image.
+          if (!this.textOfCell) {
+            this.textOfCell = this.scene.add.text(
+              bounds.centerX, // World X position
+              bounds.centerY, // World Y position
+              this.adjacentMines.toString(),
+              {
+                fontSize: "20px",
+                color: "#000000",
+              }
+            );
+            this.textOfCell.setOrigin(0.5); // Center the text inside the cell
+            this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
+          } else {
+            this.textOfCell.setAbove(this.image);
+          }
+        }
+      } else if (this.contains === CellContent.HAZARD) {
+        this.image = this.scene.add.image(
+          bounds.centerX, 
+          bounds.centerY, 
+          "mine"
+        );
+      }
     }
   }
 

@@ -4,8 +4,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   inventory: Item[] = [];
   health: number = 100;
   maxHealth: number = 100;
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
-  private currentDirection: string = "down";
+  private readonly cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
+  currentDirection: string = "down";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, "knight", 13);

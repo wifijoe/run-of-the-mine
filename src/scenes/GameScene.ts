@@ -28,6 +28,8 @@ class GameScene extends Phaser.Scene {
   flagButton!: Phaser.GameObjects.Rectangle;
   basicDifficulty = [0, 0, 0]; // size, time, mine density
 
+  gridEngine!: GridEngine;
+
   private keydownListener: (event: KeyboardEvent) => void;
 
   constructor() {
@@ -79,7 +81,7 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.setOrigin(0.5);
       this.keydownListener = (event: KeyboardEvent) => {
         if (event.key === "n" || event.key === "N") {
-          this.basicDifficulty[0] += 1; // todo: make difficulty increase random
+          this.basicDifficulty[0] += 1; // TODO: make difficulty increase random
           this.nextLevel();
         }
       };
@@ -98,8 +100,8 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.destroy();
     }
 
-    if (this.level?.board?.player.active) {
-      this.level.board.player.destroy();
+    if (this.level?.board?.getPlayer().active) {
+      this.level.board.getPlayer().destroy();
     }
 
     // Remove the event listener
@@ -208,8 +210,8 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.destroy();
     }
 
-    if (this.level?.board?.player.active) {
-      this.level.board.player.destroy();
+    if (this.level?.board?.getPlayer().active) {
+      this.level.board.getPlayer().destroy();
     }
 
     // Remove the event listener
@@ -347,7 +349,7 @@ class GameScene extends Phaser.Scene {
   levelCompleted() {
     // Reset board for new level
     // make sure to destroy the sprite so a new one can be created
-    this.level.board.player.destroy();
+    this.level.board.getPlayer().destroy();
   }
 }
 

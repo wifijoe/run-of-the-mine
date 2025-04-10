@@ -1,10 +1,24 @@
-import Cell, { CellContent, CellState, TileIndices } from "./Cell";
-import { Player } from "./Player";
+import { GameConfig } from "./types";
+import GameScene from "../scenes/GameScene";
+import { TileManager } from "./tiles/TileManager";
+import { BoardGenerator } from "./generation/BoardGenerator";
+import { GameLogic } from "./game/GameLogic";
+import { PlayerManager } from "./player/PlayerManager";
+import Cell, { CellContent, CellState, TileIndices } from "./Cell2";
+import { Player } from "./player/Player";
 import { Pathfinder } from "./Pathfinder";
-import { GridEngine, GridEngineConfig } from "grid-engine";
+
 class GameBoard extends Phaser.GameObjects.Container {
-  tilemap: Phaser.Tilemaps.Tilemap;
+  private readonly config: GameConfig;
+  private readonly tileManager: TileManager;
+  private readonly boardGenerator: BoardGenerator;
+  private readonly gameLogic: GameLogic;
+  private readonly playerManager: PlayerManager;
+
+  private tilemap: Phaser.Tilemaps.Tilemap;
   tileLayer: Phaser.Tilemaps.TilemapLayer;
+  hazardLayer: Phaser.Tilemaps.TilemapLayer;
+  coverLayer: Phaser.Tilemaps.TilemapLayer;
   cells: Cell[][];
   numberOfMines: number;
   cellWidth: number;
@@ -19,16 +33,44 @@ class GameBoard extends Phaser.GameObjects.Container {
   private readonly pathfinder: Pathfinder;
 
   constructor(
-    scene: Phaser.Scene,
     x: number,
     y: number,
     width: number,
     height: number,
     cellWidth: number,
     cellHeight: number,
-    entranceDirection: Compass
+    entranceDirection: Compass,
+    gameScene: GameScene
   ) {
-    super(scene, x, y);
+    super(gameScene, x, y);
+
+    this.config = {
+      width,
+      height,
+      cellWidth,
+      cellHeight,
+      entranceDirection,
+      mineDensity: 0.15,
+    };
+
+    this.gameScene = gameScene;
+
+    // Initialize components
+    this.tileManager = new TileManager(gameScene, this.config);
+    this.boardGenerator = new BoardGenerator(this.tileManager, this.config);
+    this.gameLogic = new GameLogic(this.tileManager, width, height);
+
+    // Generate the board
+    this.boardGenerator.generateBoard();
+    const startPosition = this.boardGenerator.getStartPosition();
+
+    // Initialize player
+    this.playerManager = new PlayerManager(
+      gameScene,
+      startPosition,
+      this.tileManager
+    );
+
     this.cells = [];
     this.numberOfMines = 0;
     this.cellWidth = cellWidth;
@@ -47,8 +89,6 @@ class GameBoard extends Phaser.GameObjects.Container {
 
     this.setSize(width * cellWidth, height * cellHeight);
     this.setInteractive();
-
-    // Initialize pathfinder
   }
 
   createTilemap() {
@@ -210,23 +250,6 @@ class GameBoard extends Phaser.GameObjects.Container {
       -this.player.height / 2
     );
     this.playerPosition = [startX, startY];
-
-    const gridEngineConfig: GridEngineConfig = {
-      characters: [
-        {
-          id: "player",
-          sprite: this.player,
-          walkingAnimationMapping: 0,
-          startPosition: {
-            x: startX,
-            y: startY,
-          },
-          offsetY: -4,
-        },
-      ],
-    };
-
-    // this.scene.gridEngine.create(this.tilemap, gridEngineConfig);
     // Place mines
     this.placeMines(startX, startY, 0.15);
     this.calculateAdjacentMines();
@@ -445,29 +468,25 @@ class GameBoard extends Phaser.GameObjects.Container {
       const prevY = index === 0 ? this.playerPosition[1] : path[index - 1][1];
       const direction = this.getDirection(prevX, prevY, x, y);
 
-      // // Create tween
-      // this.scene.tweens.add({
-      //   targets: this.player,
-      //   x: centerX,
-      //   y: centerY,
-      //   duration: 200,
-      //   onStart: () => {
-      //     this.player.anims.play(direction, true);
-      //   },
-      //   onComplete: () => {
-      //     // Update player position
-      //     this.playerPosition = [x, y];
-      //     this.player.x = centerX;
-      //     this.player.y = centerY;
-      //     // Play idle animation when movement is complete
-      //     if (index === path.length - 1) {
-      //       this.player.anims.play(`idle_${direction}`, true);
-      //     }
-      //   },
-      // });
-      this.scene.gridEngine.moveTo("player", {
+      // Create tween
+      this.scene.tweens.add({
+        targets: this.player,
         x: centerX,
         y: centerY,
+        duration: 200,
+        onStart: () => {
+          this.player.anims.play(direction, true);
+        },
+        onComplete: () => {
+          // Update player position
+          this.playerPosition = [x, y];
+          this.player.x = centerX;
+          this.player.y = centerY;
+          // Play idle animation when movement is complete
+          if (index === path.length - 1) {
+            this.player.anims.play(`idle_${direction}`, true);
+          }
+        },
       });
     });
   }
@@ -512,7 +531,8 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 
   revealStart() {
-    this.revealCell(this.playerPosition[0], this.playerPosition[1]);
+    const startPosition = this.boardGenerator.getStartPosition();
+    this.gameLogic.revealCell(startPosition[0], startPosition[1]);
   }
 
   // Clean up resources when board is destroyed
@@ -526,6 +546,18 @@ class GameBoard extends Phaser.GameObjects.Container {
 
     // Call the parent's destroy method
     super.destroy();
+  }
+
+  public isGameOver(): boolean {
+    return this.gameLogic.isGameOver();
+  }
+
+  public setGameOver(value: boolean) {
+    this.gameLogic.setGameOver(value);
+  }
+
+  public getPlayer(): Player {
+    return this.playerManager.getPlayer();
   }
 }
 

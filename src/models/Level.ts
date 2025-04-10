@@ -1,5 +1,6 @@
-import GameBoard, { Compass } from "./GameBoard";
-
+import { Compass } from "./GameBoard";
+import GameBoard from "./GameBoard2";
+import GameScene from "../scenes/GameScene";
 class Level {
   board: GameBoard;
   timePlayed: number;
@@ -8,7 +9,7 @@ class Level {
   levelDifficulty: number;
 
   constructor(
-    scene: Phaser.Scene,
+    scene: GameScene,
     x: number,
     y: number,
     width: number,
@@ -18,14 +19,14 @@ class Level {
     levelDifficulty: number
   ) {
     this.board = new GameBoard(
-      scene,
       x,
       y,
       width,
       height,
       cellWidth,
       cellHeight,
-      Compass.SOUTH
+      Compass.SOUTH,
+      scene
     );
     this.timePlayed = 0;
     this.points = 0;

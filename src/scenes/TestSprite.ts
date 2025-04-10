@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { Player } from "../models/Player";
+import { Player } from "../models/player/Player";
 
 export class TestSprite extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;

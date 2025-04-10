@@ -1,4 +1,4 @@
-import { CellContent, CellState } from "./Cell";
+import { CellContent, CellState } from "./Cell2";
 import GameBoard from "./GameBoard";
 
 export class Pathfinder {

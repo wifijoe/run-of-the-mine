@@ -1,4 +1,5 @@
 import Board from "./Board";
+import GameScene from "../scenes/GameScene";
 import Cell, { CellContent, CellState } from "./Cell";
 
 class GameBoard extends Board {
@@ -122,7 +123,8 @@ class GameBoard extends Board {
           cellWidth,
           cellHeight,
           cellContent,
-          this
+          this,
+          this.scene as GameScene
         );
         this.grid[i][j] = cell;
         this.add(cell); // Add cell to the container

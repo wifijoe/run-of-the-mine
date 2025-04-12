@@ -1,3 +1,4 @@
+import GameScene from "../scenes/GameScene";
 import Board from "./Board";
 
 class Cell extends Phaser.GameObjects.Rectangle {
@@ -6,9 +7,11 @@ class Cell extends Phaser.GameObjects.Rectangle {
   adjacentMines: number;
   textOfCell: Phaser.GameObjects.Text;
   board: Board;
+  gameScene: GameScene;
   image: Phaser.GameObjects.Image;
   imageName: string;
   exitImageName: string;
+  flagImage: Phaser.GameObjects.Image | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -18,7 +21,8 @@ class Cell extends Phaser.GameObjects.Rectangle {
     width: number,
     height: number,
     contains: CellContent,
-    board: Board
+    board: Board,
+    gameScene: GameScene
   ) {
     super(scene, x, y, width, height);
     this.x = x;
@@ -29,6 +33,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
     this.contains = contains;
     this.adjacentMines = 0;
     this.board = board;
+    this.gameScene = gameScene;
     this.exitImageName = exitImageName;
     // randomly switch between "stony" and "speckled"
     const random = Math.random();
@@ -51,6 +56,39 @@ class Cell extends Phaser.GameObjects.Rectangle {
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       board.clickCell(this, pointer);
+
+      //Old code for handling clicks
+      // if (pointer.button === 0) {
+      //   if (
+      //     this.cellState != CellState.HIDDEN &&
+      //     this.cellState != CellState.FLAGGED
+      //   ) {
+      //     // hidden cells are unclickable
+      //     if (this.contains === CellContent.WALL) {
+      //       return; // Don't do anything if the cell is a wall
+      //     } else if (this.contains === CellContent.EXIT) {
+      //       gameScene.updateScore(100);
+      //       board.winLevel();
+      //       return;
+      //     } else if (this.contains === CellContent.HAZARD) {
+      //       this.cellState = CellState.REVEALED;
+      //       board.loseGame();
+      //     } else {
+      //       gameScene.updateScore(10);
+      //       this.board.revealCell(this.getGridX(), this.getGridY());
+      //     }
+      //   }
+      // } else if (pointer.button === 2) {
+      //   if (this.cellState == CellState.FLAGGED) {
+      //     this.cellState = CellState.HIDDEN;
+      //   } else if (this.cellState == CellState.VISIBLE || this.cellState == CellState.HIDDEN) {
+      //     this.cellState = CellState.FLAGGED;
+      //   } else if (this.cellState == CellState.REVEALED) {
+      //     //todo: place a bomb
+      //   }
+      // }
+
+      this.update();
     });
   }
 
@@ -59,11 +97,16 @@ class Cell extends Phaser.GameObjects.Rectangle {
   }
 
   updateAppearance() {
+    if (this.flagImage) {
+      this.flagImage.destroy();
+    }
+
     const bounds = this.getBounds(); // Get world bounds of the cell
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
-      this.setFillStyle(0xffff00); // whatever color this is for flagged cells
+      this.flagImage = this.scene.add.image(this.x + 192, this.y + 64, "flag");
+      this.flagImage.setScale(0.0157);
     } else if (this.contains === CellContent.WALL) {
       // revealed/visible doesn't
       this.setFillStyle(0x000000); // Black          // matter for walls or exit

@@ -97,7 +97,7 @@ class GameScene extends Phaser.Scene {
 
     // Reset other game objects
     if (this.scoreText) {
-      this.scoreText.setText("Score: 0");
+      this.scoreText.setText(`Score: ${this.score}`);
     }
 
     // Create new Level
@@ -135,9 +135,10 @@ class GameScene extends Phaser.Scene {
       fontFamily: '"Orbitron", sans-serif',
     });
 
-    // Game score, currently not synced with anything
+    // Game score
+    this.score = 0;
     this.scoreText = this.add
-      .text(centerX * 2 - 40, 30, "Score: 0", {
+      .text(centerX * 2 - 40, 30, `Score: ${this.score}`, {
         fontSize: "30px",
         color: "#ffffff",
         fontFamily: '"Orbitron", sans-serif',
@@ -190,12 +191,6 @@ class GameScene extends Phaser.Scene {
     // Remove the event listener
     this.input.keyboard?.off("keydown", this.keydownListener);
 
-    /*   // Reset other game objects
-    if (this.scoreText) {
-      this.scoreText.setText("Score: 0");
-    }
-    */
-
     // Create new Level
     const cellSize = 32;
     const boardWidth = 20 + this.basicDifficulty[0];
@@ -231,9 +226,9 @@ class GameScene extends Phaser.Scene {
       fontFamily: '"Orbitron", sans-serif',
     });
 
-    // Game score, currently not synced with anything
+    // Game score
     this.scoreText = this.add
-      .text(centerX * 2 - 40, 30, "Score: 0", {
+      .text(centerX * 2 - 40, 30, `Score: ${this.score}`, {
         fontSize: "30px",
         color: "#ffffff",
         fontFamily: '"Orbitron", sans-serif',
@@ -265,7 +260,7 @@ class GameScene extends Phaser.Scene {
     this.updateTimerBar();
 
     this.countdownEvent = this.time.addEvent({
-      delay: 80,
+      delay: 100,
       callback: this.updateCountdown,
       callbackScope: this,
       loop: true,
@@ -278,7 +273,7 @@ class GameScene extends Phaser.Scene {
   }
 
   updateCountdown() {
-    this.timeLeft -= 0.1;
+    this.timeLeft -= 0.09;
 
     if (this.timeLeft <= 0) {
       this.timeLeft = 0;

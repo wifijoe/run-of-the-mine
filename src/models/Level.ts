@@ -1,17 +1,11 @@
 import GameBoard, { Compass } from "./GameBoard";
 
 class Level {
-  revealRandomMines(arg0: number) {
-    throw new Error("Method not implemented.");
-  }
-  createSafePath(arg0: number) {
-    throw new Error("Method not implemented.");
-  }
   board: GameBoard;
   timePlayed: number;
   points: number;
   hasWon: boolean;
-  levelDifficulty: number;
+  levelDifficulty: number[];
 
   constructor(
     scene: Phaser.Scene,
@@ -21,8 +15,9 @@ class Level {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    levelDifficulty: number
+    levelDifficulty: number[]
   ) {
+    console.log("levelDifficulty: ", levelDifficulty);
     this.board = new GameBoard(
       scene,
       x,
@@ -31,7 +26,8 @@ class Level {
       height,
       cellWidth,
       cellHeight,
-      Compass.SOUTH
+      Compass.SOUTH,
+      levelDifficulty[2]
     );
     this.timePlayed = 0;
     this.points = 0;

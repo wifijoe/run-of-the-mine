@@ -22,7 +22,8 @@ class GameBoard extends Board {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    entranceDirection: Compass //
+    entranceDirection: Compass,
+    mineDensity: number = 0.15
   ) {
     super(scene, x, y, width, height, cellWidth, cellHeight);
     this.grid = [];
@@ -34,8 +35,18 @@ class GameBoard extends Board {
     this.width = width;
     this.height = height;
 
+    console.log("boardWidth: ", this.boardWidth);
+    console.log("mineDensity: ", mineDensity);
+
     //todo: put the player in the revealed space by the entrance of the board
-    this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
+    this.generateBoard(
+      cellWidth,
+      cellHeight,
+      width,
+      height,
+      entranceDirection,
+      mineDensity
+    );
 
     this.setSize(width * cellWidth, height * cellHeight);
 
@@ -50,7 +61,8 @@ class GameBoard extends Board {
     cellHeight: number,
     width: number,
     height: number,
-    entranceDirection: Compass
+    entranceDirection: Compass,
+    mineDensity: number = 0.15
   ) {
     this.entranceDirection = entranceDirection;
     //randomly select four points for the exits/entrance
@@ -152,7 +164,7 @@ class GameBoard extends Board {
     }
     // Place mines, avoiding the edge tiles
     this.playerPosition = [startX!, startY!];
-    this.placeMines(startX!, startY!, 0.15);
+    this.placeMines(startX!, startY!, mineDensity);
     this.calculateAdjacentMines();
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
@@ -279,19 +291,24 @@ class GameBoard extends Board {
         if (cell.contains === CellContent.WALL) {
           return; // Don't do anything if the cell is a wall
         } else if (cell.contains === CellContent.EXIT) {
+          // this.scene.updateScore(100);
           this.winLevel();
           return;
         } else if (cell.contains === CellContent.HAZARD) {
           cell.cellState = CellState.REVEALED;
           this.loseGame();
         } else {
+          // this.scene.updateScore(10);
           this.revealCell(cell.getGridX(), cell.getGridY());
         }
       }
     } else if (pointer.button === 2) {
       if (cell.cellState == CellState.FLAGGED) {
-        cell.cellState = CellState.VISIBLE;
-      } else if (cell.cellState == CellState.VISIBLE) {
+        cell.cellState = CellState.HIDDEN;
+      } else if (
+        cell.cellState == CellState.VISIBLE ||
+        cell.cellState == CellState.HIDDEN
+      ) {
         cell.cellState = CellState.FLAGGED;
       } else if (cell.cellState == CellState.REVEALED) {
         //todo: place a bomb

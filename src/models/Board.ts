@@ -26,8 +26,11 @@ abstract class Board extends Phaser.GameObjects.Container {
     this.width = width;
     this.height = height;
 
-    // this.setSize(width * cellWidth, height * cellHeight);
-    this.setInteractive();
+    this.setSize(width * cellWidth, height * cellHeight);
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, width * cellWidth, height * cellHeight),
+      Phaser.Geom.Rectangle.Contains
+    );
   }
 
   /**

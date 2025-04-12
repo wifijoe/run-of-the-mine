@@ -23,7 +23,7 @@ class GameScene extends Phaser.Scene {
   CELL_SIZE: number = 32; // Size of each cell in pixels
 
   modeText!: Phaser.GameObjects.Text;
-  basicDifficulty = [0, 0, 0]; // size, time, mine density
+  basicDifficulty = [0, 0, 0.15]; // size, time, mine density
 
   private keydownListener: (event: KeyboardEvent) => void;
 
@@ -33,7 +33,7 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.resetLevel();
-
+    // this.enterShop();
     this.events.on("gameOver", () => {
       this.gameOver = true;
       this.stopTimer();
@@ -76,42 +76,56 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.setOrigin(0.5);
       this.keydownListener = (event: KeyboardEvent) => {
         if (event.key === "n" || event.key === "N") {
-          this.basicDifficulty[0] += 1; // todo: make difficulty increase random
           this.enterShop();
           // this.nextLevel();
         }
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
-  } 
+
+    this.events.on("nextLevel", (isRightExit: boolean) => {
+      if (isRightExit) {
+        console.log("Increase Mine Density");
+        this.basicDifficulty[2] += 0.05;
+      } else {
+        console.log("Increase Board Size");
+        this.basicDifficulty[0] += 1;
+      }
+      this.nextLevel();
+    });
+  }
 
   enterShop() {
-    const boardWidth = 20;
-
-    this.add.image(0, 0, "dirt").setOrigin(0, 0);
-
     this.gameOver = false;
+
+    // Clear all existing game objects
+    this.children.removeAll();
+
+    // Destroy specific objects if they exist
     if (this.level) {
       this.level.board.destroy();
     }
-
-    // Remove other game objects
+    if (this.shop) {
+      this.shop.destroy();
+    }
     if (this.gameEndText) {
       this.gameEndText.destroy();
     }
-
     if (this.timerBar) {
-      this.timerBar.clear();
+      this.timerBar.destroy();
     }
     if (this.outlineBar) {
-      this.outlineBar.clear();
+      this.outlineBar.destroy();
     }
     if (this.countdownEvent) {
       this.countdownEvent.remove();
     }
 
-    // Remove the event listener
-    this.input.keyboard?.off("keydown", this.keydownListener);
+    // Remove any event listeners
+    this.input.keyboard?.removeAllListeners();
+
+    const boardWidth = 20;
+    this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
       (this.game.config.width as number) / 2 -
@@ -120,6 +134,12 @@ class GameScene extends Phaser.Scene {
       (this.game.config.height as number) / 2 -
       this.CELL_SIZE * (boardWidth / 2);
 
+    // Destroy existing shop board if it exists
+    if (this.shop) {
+      this.shop.destroy();
+    }
+
+    // Create new shop board
     this.shop = new ShopBoard(
       this,
       x,
@@ -129,6 +149,8 @@ class GameScene extends Phaser.Scene {
       this.CELL_SIZE,
       this.CELL_SIZE
     );
+
+    // Add the shop board to the scene
     this.add.existing(this.shop);
   }
 
@@ -171,7 +193,7 @@ class GameScene extends Phaser.Scene {
       boardWidth,
       this.CELL_SIZE,
       this.CELL_SIZE,
-      0
+      this.basicDifficulty
     );
     this.add.existing(this.level.board);
     this.level.startLevel();
@@ -263,7 +285,7 @@ class GameScene extends Phaser.Scene {
       boardWidth,
       this.CELL_SIZE,
       this.CELL_SIZE,
-      0
+      this.basicDifficulty
     );
     this.add.existing(this.level.board);
     this.level.startLevel();

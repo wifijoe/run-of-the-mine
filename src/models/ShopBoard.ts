@@ -1,3 +1,4 @@
+import GameScene from "../scenes/GameScene";
 import Board from "./Board";
 import Cell, { CellContent, CellState } from "./Cell";
 
@@ -23,13 +24,40 @@ class ShopBoard extends Board {
     this.cellHeight = cellHeight;
     this.boardWidth = width;
     this.boardHeight = height;
-    // this.setSize(width * cellWidth, height * cellHeight);
+    this.width = width;
+    this.height = height;
+
     this.generateBoard(cellWidth, cellHeight, width, height);
+
+    this.setSize(width * cellWidth, height * cellHeight);
+
     this.setInteractive();
   }
 
   clickCell(cell: Cell, pointer: Phaser.Input.Pointer): void {
-    throw new Error("Method not implemented.");
+    console.log("Shop Cell clicked:", cell.x, cell.y, pointer.button);
+    if (pointer.button === 0) {
+      if (cell.contains === CellContent.WALL) {
+        return; // Don't do anything if the cell is a wall
+      } else if (cell.contains === CellContent.EXIT) {
+        console.log("Exit clicked!");
+        this.nextLevel(cell);
+        return;
+      } else {
+        console.log("returning");
+        return;
+      }
+    } else if (pointer.button === 2) {
+      return;
+    }
+  }
+
+  nextLevel(cell: Cell) {
+    if (cell.exitImageName === "exit_top_left") {
+      this.scene.events.emit("nextLevel", false);
+    } else if (cell.exitImageName === "exit_top_right") {
+      this.scene.events.emit("nextLevel", true);
+    }
   }
 
   generateBoard(
@@ -46,32 +74,50 @@ class ShopBoard extends Board {
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
-        const cell = new Cell(
-          this.scene,
-          this.x + i * cellWidth,
-          this.y + j * cellHeight,
-          "",
-          cellWidth,
-          cellHeight,
-          CellContent.EMPTY,
-          this as any
-        );
-
-        // Set all cells to revealed state
-        cell.cellState = CellState.REVEALED;
+        let cellContent = CellContent.EMPTY;
+        let exitImageName = "";
+        if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
+          cellContent = CellContent.WALL;
+        }
 
         if (
           j === middleRow &&
           (i === position3rdQuadrant || i === position4thQuadrant)
         ) {
-          cell.contains = CellContent.EXIT;
+          cellContent = CellContent.EXIT;
+          {
+            i === position3rdQuadrant
+              ? (exitImageName = "exit_top_left")
+              : "exit_top_right";
+          }
+          //Not a clue why this needs to be done both ways like this. I could do if statements
+          //but I am leaving it to show the stupidity of it
+          {
+            i === position4thQuadrant
+              ? (exitImageName = "exit_top_right")
+              : "exit_top_left";
+          }
         }
 
-        cell.update();
-        cell.setFillStyle(0x000000, 0); // Transparent fill
+        const cell = new Cell(
+          this.scene,
+          i * cellWidth,
+          j * cellHeight,
+          exitImageName,
+          cellWidth,
+          cellHeight,
+          cellContent,
+          this,
+          this.scene as GameScene,
+          CellState.REVEALED
+        );
+
+        // cell.update();
+        // cell.setFillStyle(0x000000, 0); // Transparent fill
 
         this.grid[i][j] = cell;
         this.add(cell);
+        cell.updateAppearance();
       }
     }
   }

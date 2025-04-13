@@ -1,7 +1,28 @@
-class Player extends Phaser.GameObjects.Sprite {
-  inventory: Array<Item>;
+export class Player {
+  inventory: Item[];
   health: number;
   maxHealth: number;
+
+  constructor(health: number, maxHealth: number, inventory: Item[]) {
+    this.health = health;
+    this.maxHealth = maxHealth;
+    this.inventory = inventory;
+  }
+
+  // lose 1 health, return true if dead
+  harm(): Boolean {
+    this.health -= 1;
+    if (this.health <= 0) {
+      return true;
+    }
+    return false;
+  }
+
+  heal() {
+    if (this.health < this.maxHealth) {
+      this.health += 1;
+    }
+  }
 }
 
 class Item extends Phaser.GameObjects.Sprite {

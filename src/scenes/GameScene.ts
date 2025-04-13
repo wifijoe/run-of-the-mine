@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import Level from "../models/Level";
+import { Player } from "../models/Player";
 
 class GameScene extends Phaser.Scene {
   private level: Level;
+  private player: Player;
   gameEndText: Phaser.GameObjects.Text;
   gameOver: boolean = false;
 
@@ -79,7 +81,7 @@ class GameScene extends Phaser.Scene {
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
-  } 
+  }
 
   resetLevel() {
     this.gameOver = false;
@@ -110,7 +112,7 @@ class GameScene extends Phaser.Scene {
       (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
     const y =
       (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
-
+    this.player = new Player(3, 3, []);
     this.level = new Level(
       this,
       x,
@@ -119,7 +121,8 @@ class GameScene extends Phaser.Scene {
       boardWidth,
       cellSize,
       cellSize,
-      0
+      0,
+      this.player
     );
     this.add.existing(this.level.board);
     this.level.startLevel();
@@ -210,7 +213,8 @@ class GameScene extends Phaser.Scene {
       boardWidth,
       cellSize,
       cellSize,
-      0
+      0,
+      this.player
     );
     this.add.existing(this.level.board);
     this.level.startLevel();

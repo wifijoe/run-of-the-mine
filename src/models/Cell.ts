@@ -69,7 +69,10 @@ class Cell extends Phaser.GameObjects.Rectangle {
             return;
           } else if (this.contains === CellContent.HAZARD) {
             this.cellState = CellState.REVEALED;
-            board.loseGame();
+            if (this.board.player.harm()) {
+              //damages and returns true if dead
+              board.loseGame();
+            }
           } else {
             gameScene.updateScore(10);
             this.board.revealCell(this.getGridX(), this.getGridY());
@@ -78,7 +81,10 @@ class Cell extends Phaser.GameObjects.Rectangle {
       } else if (pointer.button === 2) {
         if (this.cellState == CellState.FLAGGED) {
           this.cellState = CellState.HIDDEN;
-        } else if (this.cellState == CellState.VISIBLE || this.cellState == CellState.HIDDEN) {
+        } else if (
+          this.cellState == CellState.VISIBLE ||
+          this.cellState == CellState.HIDDEN
+        ) {
           this.cellState = CellState.FLAGGED;
         } else if (this.cellState == CellState.REVEALED) {
           //todo: place a bomb
@@ -102,7 +108,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
     if (this.cellState === CellState.HIDDEN) {
       this.setFillStyle(0x808080); // Grey for hidden cells
     } else if (this.cellState === CellState.FLAGGED) {
-      this.flagImage = this.scene.add.image(this.x + 192, this.y + 64, 'flag');
+      this.flagImage = this.scene.add.image(this.x + 192, this.y + 64, "flag");
       this.flagImage.setScale(0.0157);
     } else if (this.contains === CellContent.WALL) {
       // revealed/visible doesn't

@@ -73,6 +73,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
               //damages and returns true if dead
               board.loseGame();
             }
+            this.updateAppearance();
           } else if (this.contains === CellContent.POTION) {
             this.board.player.heal();
             this.contains = CellContent.EMPTY;

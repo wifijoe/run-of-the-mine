@@ -152,7 +152,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     }
     // Place mines, avoiding the edge tiles
     this.playerPosition = [startX!, startY!];
-    this.placeMines(startX!, startY!, 0.15);
+    this.placeMines(startX!, startY!, 0.05);
     this.calculateAdjacentMines();
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
@@ -164,6 +164,11 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param mineDensity density of mines on the board
    */
   placeMines(startX: number, startY: number, mineDensity: number) {
+    // place 1 potion
+    const x = Math.floor(Math.random() * (this.boardWidth - 2)) + 1;
+    const y = Math.floor(Math.random() * (this.boardHeight - 2)) + 1;
+    this.grid[x][y].contains = CellContent.POTION;
+
     this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
     let minesPlaced = 0;
 

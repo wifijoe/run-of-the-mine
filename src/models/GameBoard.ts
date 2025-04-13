@@ -152,7 +152,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     }
     // Place mines, avoiding the edge tiles
     this.playerPosition = [startX!, startY!];
-    this.placeMines(startX!, startY!, 0.05);
+    this.placeMines(startX!, startY!, 0.15);
     this.calculateAdjacentMines();
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }

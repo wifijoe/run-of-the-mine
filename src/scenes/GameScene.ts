@@ -112,7 +112,7 @@ class GameScene extends Phaser.Scene {
       (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
     const y =
       (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
-    this.player = new Player(3, 3, []);
+    this.player = new Player(3, 5, []);
     this.level = new Level(
       this,
       x,

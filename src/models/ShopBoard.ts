@@ -60,6 +60,35 @@ class ShopBoard extends Board {
     }
   }
 
+  revealStart() {
+    this.revealCell(0, 0);
+  }
+
+  revealCell(x: number, y: number) {
+    // Check to make sure x and y are valid
+    if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
+      return;
+    }
+    const cell = this.grid[x][y];
+    if (cell.cellState === CellState.REVEALED) {
+      return;
+    }
+    cell.cellState = CellState.REVEALED;
+    cell.updateAppearance();
+    this.revealCell(x - 1, y);
+    this.revealCell(x + 1, y);
+    this.revealCell(x, y - 1);
+    this.revealCell(x, y + 1);
+    this.revealCell(x - 1, y - 1);
+    this.revealCell(x - 1, y + 1);
+    this.revealCell(x + 1, y - 1);
+    this.revealCell(x + 1, y + 1);
+  }
+
+  loseGame(): void {
+    //pass
+}
+
   generateBoard(
     cellWidth: number,
     cellHeight: number,
@@ -109,15 +138,11 @@ class ShopBoard extends Board {
           cellContent,
           this,
           this.scene as GameScene,
-          CellState.REVEALED
+          CellState.HIDDEN
         );
-
-        // cell.update();
-        // cell.setFillStyle(0x000000, 0); // Transparent fill
 
         this.grid[i][j] = cell;
         this.add(cell);
-        cell.updateAppearance();
       }
     }
   }

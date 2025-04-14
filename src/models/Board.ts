@@ -60,6 +60,10 @@ abstract class Board extends Phaser.GameObjects.Container {
    * Abstract method that child classes must implement to generate their board
    */
   abstract generateBoard(...args: any[]): void;
+
+  abstract revealStart(): void;
+
+  abstract loseGame(): void;
 }
 
 export default Board;

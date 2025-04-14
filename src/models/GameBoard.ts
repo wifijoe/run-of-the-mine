@@ -16,6 +16,7 @@ class GameBoard extends Board {
   gameOver: boolean = false;
   entranceDirection: Compass;
   player: Player;
+  
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -245,11 +246,7 @@ class GameBoard extends Board {
       return;
     }
     const cell = this.grid[x][y];
-    if (
-      cell.cellState === CellState.REVEALED ||
-      cell.contains === CellContent.WALL ||
-      cell.contains === CellContent.EXIT
-    ) {
+    if (cell.cellState === CellState.REVEALED) {
       return;
     }
     cell.cellState = CellState.REVEALED;
@@ -309,12 +306,9 @@ class GameBoard extends Board {
         }
       }
     } else if (pointer.button === 2) {
-      if (cell.cellState == CellState.FLAGGED) {
-        cell.cellState = CellState.HIDDEN;
-      } else if (
-        cell.cellState == CellState.VISIBLE ||
-        cell.cellState == CellState.HIDDEN
-      ) {
+      if (cell.cellState === CellState.FLAGGED) {
+        cell.cellState = CellState.VISIBLE;
+      } else if (cell.cellState === CellState.VISIBLE) {
         cell.cellState = CellState.FLAGGED;
       } else if (cell.cellState == CellState.REVEALED) {
         //todo: place a bomb

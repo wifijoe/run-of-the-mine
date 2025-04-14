@@ -1,5 +1,6 @@
 import GameScene from "../scenes/GameScene";
 import Cell, { CellContent, CellState } from "./Cell";
+import { Player } from "./Player";
 
 class GameBoard extends Phaser.GameObjects.Container {
   grid: Cell[][];
@@ -11,6 +12,7 @@ class GameBoard extends Phaser.GameObjects.Container {
   gameOver: boolean = false;
   playerPosition: [number, number];
   entranceDirection: Compass;
+  player: Player;
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -19,7 +21,8 @@ class GameBoard extends Phaser.GameObjects.Container {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    entranceDirection: Compass //
+    entranceDirection: Compass,
+    player: Player
   ) {
     super(scene, x, y);
     this.grid = [];
@@ -30,7 +33,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.boardHeight = height;
     this.width = width;
     this.height = height;
-
+    this.player = player;
     //todo: put the player in the revealed space by the entrance of the board
     this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
 
@@ -161,6 +164,11 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param mineDensity density of mines on the board
    */
   placeMines(startX: number, startY: number, mineDensity: number) {
+    // place 1 potion
+    const x = Math.floor(Math.random() * (this.boardWidth - 2)) + 1;
+    const y = Math.floor(Math.random() * (this.boardHeight - 2)) + 1;
+    this.grid[x][y].contains = CellContent.POTION;
+
     this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
     let minesPlaced = 0;
 

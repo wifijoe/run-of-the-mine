@@ -1,4 +1,3 @@
-import GridEngine from "grid-engine";
 import { Boot } from "./scenes/Boot";
 // import { Game as MainGame } from "./scenes/Game";
 import { GameOver } from "./scenes/GameOver";
@@ -8,6 +7,7 @@ import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 
 import { Game, Types } from "phaser";
+import { TestSprite } from "./scenes/TestSprite";
 
 const config: Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -15,6 +15,8 @@ const config: Types.Core.GameConfig = {
   height: 768,
   parent: "game-container",
   backgroundColor: "#028af8",
+  disableContextMenu: true, // to allow right-clicks on the board
+
   // plugins: {
   //   scene: [
   //     {
@@ -28,6 +30,12 @@ const config: Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { x: 0, y: 0 },
+    },
+  },
   callbacks: {
     preBoot: (game) => {
       game.registry.merge({
@@ -37,7 +45,7 @@ const config: Types.Core.GameConfig = {
       });
     },
   },
-  scene: [Boot, Preloader, MainMenu, GameScene, GameOver],
+  scene: [Boot, Preloader, MainMenu, TestSprite, GameScene, GameOver],
 };
 
 export default new Game(config);

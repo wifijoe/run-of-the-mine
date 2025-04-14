@@ -1,11 +1,22 @@
-class GameBoard extends Phaser.GameObjects.Container {
+import Board from "./Board";
+import GameScene from "../scenes/GameScene";
+import Cell, { CellContent, CellState } from "./Cell";
+import { Player } from "./Player";
+
+class GameBoard extends Board {
+  /* Properties from Board.ts
   grid: Cell[][];
-  numberOfMines: number;
-  cellWidth: number;
-  cellHeight: number;
   boardWidth: number;
   boardHeight: number;
-
+  cellWidth: number;
+  cellHeight: number;
+  playerPosition: [number, number];
+  */
+  numberOfMines: number;
+  gameOver: boolean = false;
+  entranceDirection: Compass;
+  player: Player;
+  
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -13,9 +24,11 @@ class GameBoard extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
+    entranceDirection: Compass,
+    mineDensity: number = 0.15
   ) {
-    super(scene, x, y);
+    super(scene, x, y, width, height, cellWidth, cellHeight);
     this.grid = [];
     this.numberOfMines = 0;
     this.cellWidth = cellWidth;
@@ -25,39 +38,21 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.width = width;
     this.height = height;
 
-    this.generateBoard(cellWidth, cellHeight, width, height);
+    console.log("boardWidth: ", this.boardWidth);
+    console.log("mineDensity: ", mineDensity);
+    //todo: put the player in the revealed space by the entrance of the board
+    this.generateBoard(
+      cellWidth,
+      cellHeight,
+      width,
+      height,
+      entranceDirection,
+      mineDensity
+    );
 
     this.setSize(width * cellWidth, height * cellHeight);
 
     this.setInteractive();
-
-    // // Handle click events on the board
-    // this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    //   console.log("Pointer down on board", pointer);
-    //   this.handlePointerDown(pointer);
-    // });
-  }
-
-  /**
-   * Handles click events on the board
-   * @param pointer the pointer that was clicked
-   */
-  handlePointerDown(pointer: Phaser.Input.Pointer) {
-    const localX = pointer.x - this.x;
-    const localY = pointer.y - this.y;
-
-    const cellX = Math.floor(localX / this.cellWidth);
-    const cellY = Math.floor(localY / this.cellHeight);
-
-    // Ensure the click is within the board bounds
-    if (
-      cellX >= 0 &&
-      cellX < this.boardWidth &&
-      cellY >= 0 &&
-      cellY < this.boardHeight
-    ) {
-      this.checkCell(cellX, cellY);
-    }
   }
 
   /**
@@ -67,27 +62,113 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellWidth: number,
     cellHeight: number,
     width: number,
-    height: number
+    height: number,
+    entranceDirection: Compass,
+    mineDensity: number = 0.15
   ) {
+    this.entranceDirection = entranceDirection;
+    //randomly select four points for the exits/entrance
+    const exits = [
+      Math.floor(Math.random() * (width - 2)) + 1, // north exit west cell
+      Math.floor(Math.random() * (height - 2)) + 1, // east exit north cell
+      Math.floor(Math.random() * (width - 2)) + 1, // south exit west cell
+      Math.floor(Math.random() * (height - 2)) + 1, // west exit north cell
+    ];
+
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
+        let cellContent = CellContent.EMPTY;
+        let exitImageName = "";
+        // Create wall cells around the border
+        if (i === 0 || i === width - 1 || j === 0 || j === height - 1) {
+          cellContent = CellContent.WALL;
+
+          // Create exit cells in two cells of each edge
+          // top
+          if ((i === exits[0] || i === exits[0] + 1) && j === 0) {
+            if (entranceDirection != Compass.NORTH) {
+              cellContent = CellContent.EXIT;
+            }
+            // TODO: get an entrance sprite (collapsed tunnel?) and use in all cases
+            if (i === exits[0]) {
+              exitImageName = "exit_top_left";
+            } else {
+              exitImageName = "exit_top_right";
+            }
+          } // bottom
+          else if ((i === exits[2] || i === exits[2] + 1) && j === height - 1) {
+            if (entranceDirection != Compass.SOUTH) {
+              cellContent = CellContent.EXIT;
+            }
+            if (i === exits[2]) {
+              exitImageName = "exit_bottom_left";
+            } else {
+              exitImageName = "exit_bottom_right";
+            }
+          } // left
+          else if ((j === exits[3] || j === exits[3] + 1) && i === 0) {
+            if (entranceDirection != Compass.WEST) {
+              cellContent = CellContent.EXIT;
+            }
+            if (j === exits[3]) {
+              exitImageName = "exit_left_top";
+            } else {
+              exitImageName = "exit_left_bottom";
+            }
+          } // right
+          else if ((j === exits[1] || j === exits[1] + 1) && i === width - 1) {
+            if (entranceDirection != Compass.EAST) {
+              cellContent = CellContent.EXIT;
+            }
+            if (j === exits[1]) {
+              exitImageName = "exit_right_top";
+            } else {
+              exitImageName = "exit_right_bottom";
+            }
+          }
+        }
+
         const cell = new Cell(
           this.scene,
           i * cellWidth,
           j * cellHeight,
+          exitImageName,
           cellWidth,
           cellHeight,
-          CellContent.EMPTY,
-          this
+          cellContent,
+          this,
+          this.scene as GameScene
         );
         this.grid[i][j] = cell;
         this.add(cell); // Add cell to the container
       }
     }
 
-    this.placeMines();
+    let startX, startY: number;
+    switch (entranceDirection) {
+      case Compass.NORTH:
+        startX = exits[0];
+        startY = 1;
+        break;
+      case Compass.EAST:
+        startX = width - 2;
+        startY = exits[1];
+        break;
+      case Compass.SOUTH:
+        startX = exits[2];
+        startY = height - 2;
+        break;
+      case Compass.WEST:
+        startX = 1;
+        startY = exits[3];
+        break;
+    }
+    // Place mines, avoiding the edge tiles
+    this.playerPosition = [startX!, startY!];
+    this.placeMines(startX!, startY!, mineDensity);
     this.calculateAdjacentMines();
+    //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
 
   /**
@@ -96,20 +177,21 @@ class GameBoard extends Phaser.GameObjects.Container {
    * @param startY y coordinate of the starting cell
    * @param mineDensity density of mines on the board
    */
-  placeMines(
-    startX: number = this.boardWidth - 1,
-    startY: number = Math.floor(this.boardHeight / 2),
-    mineDensity: number = 0.15
-  ) {
+  placeMines(startX: number, startY: number, mineDensity: number) {
+    // place 1 potion
+    const x = Math.floor(Math.random() * (this.boardWidth - 2)) + 1;
+    const y = Math.floor(Math.random() * (this.boardHeight - 2)) + 1;
+    this.grid[x][y].contains = CellContent.POTION;
+
     this.numberOfMines = this.boardWidth * this.boardHeight * mineDensity;
     let minesPlaced = 0;
 
     while (minesPlaced < this.numberOfMines) {
       // We need an x and a y that are random and within the bounds of the board
-      const x = Math.floor(Math.random() * this.boardWidth);
-      const y = Math.floor(Math.random() * this.boardHeight);
+      const x = Math.floor(Math.random() * (this.boardWidth - 2)) + 1;
+      const y = Math.floor(Math.random() * (this.boardHeight - 2)) + 1;
 
-      // Check if current position is the start position or adjacent to it
+      // Check if current position is in the start area
       if (Math.abs(x - startX) <= 1 && Math.abs(y - startY) <= 1) {
         continue;
       }
@@ -154,31 +236,11 @@ class GameBoard extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Determines what to do when a cell is clicked
-   *
-   * If the cell was a mine, you lose :(
-   *
-   * If the cell was empty, reveal all adjacent cells
-   * @param x x coordinate of the cell
-   * @param y y coordinate of the cell
-   */
-  checkCell(x: number, y: number): CellContent {
-    const cell = this.grid[x][y];
-    if (cell.contains === CellContent.HAZARD) {
-      return CellContent.HAZARD;
-    }
-    if (cell.contains === CellContent.EMPTY) {
-      this.revealAdjacentCells(x, y);
-    }
-    return cell.contains;
-  }
-
-  /**
    * Reveals all adjacent cells
    * @param x x coordinate of the cell
    * @param y y coordinate of the cell
    */
-  revealAdjacentCells(x: number, y: number) {
+  revealCell(x: number, y: number) {
     // Check to make sure x and y are valid
     if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
       return;
@@ -188,12 +250,69 @@ class GameBoard extends Phaser.GameObjects.Container {
       return;
     }
     cell.cellState = CellState.REVEALED;
-    cell.update();
+    cell.updateAppearance();
     if (cell.adjacentMines === 0) {
-      this.revealAdjacentCells(x - 1, y);
-      this.revealAdjacentCells(x + 1, y);
-      this.revealAdjacentCells(x, y - 1);
-      this.revealAdjacentCells(x, y + 1);
+      this.revealCell(x - 1, y);
+      this.revealCell(x + 1, y);
+      this.revealCell(x, y - 1);
+      this.revealCell(x, y + 1);
+      this.revealCell(x - 1, y - 1);
+      this.revealCell(x - 1, y + 1);
+      this.revealCell(x + 1, y - 1);
+      this.revealCell(x + 1, y + 1);
+    } else {
+      this.setCellVisible(x - 1, y);
+      this.setCellVisible(x + 1, y);
+      this.setCellVisible(x, y - 1);
+      this.setCellVisible(x, y + 1);
+      this.setCellVisible(x - 1, y - 1);
+      this.setCellVisible(x - 1, y + 1);
+      this.setCellVisible(x + 1, y - 1);
+      this.setCellVisible(x + 1, y + 1);
+    }
+  }
+
+  setCellVisible(x: number, y: number) {
+    // Check to make sure x and y are valid
+    if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
+      return;
+    }
+    const cell = this.grid[x][y];
+    if (cell.cellState === CellState.HIDDEN) {
+      cell.cellState = CellState.VISIBLE;
+      cell.updateAppearance();
+    }
+  }
+
+  clickCell(cell: Cell, pointer: Phaser.Input.Pointer) {
+    if (pointer.button === 0) {
+      if (
+        cell.cellState != CellState.HIDDEN &&
+        cell.cellState != CellState.FLAGGED
+      ) {
+        // hidden cells are unclickable
+        if (cell.contains === CellContent.WALL) {
+          return; // Don't do anything if the cell is a wall
+        } else if (cell.contains === CellContent.EXIT) {
+          // this.scene.updateScore(100);
+          this.winLevel();
+          return;
+        } else if (cell.contains === CellContent.HAZARD) {
+          cell.cellState = CellState.REVEALED;
+          this.loseGame();
+        } else {
+          // this.scene.updateScore(10);
+          this.revealCell(cell.getGridX(), cell.getGridY());
+        }
+      }
+    } else if (pointer.button === 2) {
+      if (cell.cellState === CellState.FLAGGED) {
+        cell.cellState = CellState.VISIBLE;
+      } else if (cell.cellState === CellState.VISIBLE) {
+        cell.cellState = CellState.FLAGGED;
+      } else if (cell.cellState == CellState.REVEALED) {
+        //todo: place a bomb
+      }
     }
   }
 
@@ -205,7 +324,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     for (let i = 0; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
         this.grid[i][j].cellState = CellState.REVEALED;
-        this.grid[i][j].update();
+        this.grid[i][j].updateAppearance();
       }
     }
   }
@@ -217,107 +336,60 @@ class GameBoard extends Phaser.GameObjects.Container {
       color: "#ff0000",
     });
     this.removeInteractive();
-  }
-}
+    this.gameOver = true;
 
-class Cell extends Phaser.GameObjects.Rectangle {
-  cellState: CellState;
-  contains: CellContent;
-  adjacentMines: number;
-  textOfCell: Phaser.GameObjects.Text;
-  board: GameBoard;
-
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    contains: CellContent,
-    board: GameBoard
-  ) {
-    super(scene, x, y, width, height);
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.cellState = CellState.HIDDEN;
-    this.contains = contains;
-    this.adjacentMines = 0;
-    this.board = board;
-
-    this.setFillStyle(0x808080); // Grey for hidden cells
-
-    this.setStrokeStyle(1, 0x000000);
-    // Black border for all cells
-
-    // Ensure the hit area is set correctly
-    this.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, width, height),
-      Phaser.Geom.Rectangle.Contains
-    );
-
-    // Add an event listener to detect clicks on this cell
-    this.on("pointerdown", () => {
-      const cellContains = this.board.checkCell(
-        this.getGridX(),
-        this.getGridY()
-      );
-      if (cellContains === CellContent.HAZARD) {
-        this.cellState = CellState.REVEALED;
-        board.loseGame();
+    // Disable interaction on each cell
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.grid[i][j].disableInteractive();
       }
+    }
+
+    this.scene.events.emit("gameOver");
+  }
+
+  winLevel() {
+    this.revealAllCells();
+    this.scene.add.text(8, 120, "You win!", {
+      fontSize: "32px",
+      color: "#00ff00",
     });
-  }
+    this.removeInteractive();
+    this.gameOver = true;
 
-  // Helper methods to get grid position
-  getGridX(): number {
-    return Math.floor(this.x / this.width);
-  }
-
-  getGridY(): number {
-    return Math.floor(this.y / this.height);
-  }
-
-  update() {
-    if (this.cellState === CellState.REVEALED) {
-      if (this.contains === CellContent.HAZARD) {
-        this.setFillStyle(0xff0000);
-      } else if (this.contains === CellContent.EMPTY) {
-        this.setFillStyle(0xffffff);
-        if (this.adjacentMines > 0) {
-          if (!this.textOfCell) {
-            const bounds = this.getBounds(); // Get world bounds of the cell
-            this.textOfCell = this.scene.add.text(
-              bounds.centerX, // World X position
-              bounds.centerY, // World Y position
-              this.adjacentMines.toString(),
-              {
-                fontSize: "20px",
-                color: "#000000",
-              }
-            );
-
-            this.textOfCell.setOrigin(0.5); // Center the text inside the cell
-            this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
-          }
-        }
+    // Disable interaction on each cell
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        this.grid[i][j].disableInteractive();
       }
-    } else if (this.cellState === CellState.FLAGGED) {
-      this.setFillStyle(0xffff00);
+    }
+
+    this.scene.events.emit("levelComplete");
+  }
+
+  revealStart() {
+    this.loadCell();
+    this.revealCell(this.playerPosition[0], this.playerPosition[1]);
+  }
+
+  loadCell() {
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        const cell = this.grid[i][j];
+        cell.updateAppearance();
+      }
     }
   }
+
+  movePlayer(x: number, y: number) {
+    this.playerPosition = [x, y]; //todo: make this dynamic movement with pathfinding/animation
+  }
 }
 
-export enum CellState {
-  HIDDEN,
-  REVEALED,
-  FLAGGED,
-}
-
-enum CellContent {
-  EMPTY,
-  HAZARD,
-  TREASURE,
+export enum Compass {
+  NORTH,
+  EAST,
+  SOUTH,
+  WEST,
 }
 export default GameBoard;

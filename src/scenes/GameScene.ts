@@ -184,7 +184,6 @@ class GameScene extends Phaser.Scene {
     const y =
       (this.game.config.height as number) / 2 -
       this.CELL_SIZE * (boardWidth / 2);
-
     this.level = new Level(
       this,
       x,

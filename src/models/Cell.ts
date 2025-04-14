@@ -85,14 +85,22 @@ class Cell extends Phaser.GameObjects.Rectangle {
         bounds.centerY,
         this.exitImageName
       );
-    } else if (this.cellState === CellState.VISIBLE) {
+    } else if (
+      this.cellState === CellState.VISIBLE &&
+      this.contains != CellContent.POTION // potions are automatically revealed
+    ) {
       this.image = this.scene.add.image(
         bounds.centerX,
         bounds.centerY,
         this.imageName + "_brown"
       );
       this.image.setToTop();
-    } else if (this.contains === CellContent.EMPTY) {
+    } else if (this.contains === CellContent.HAZARD) {
+      this.setFillStyle(0xff0000);
+    } else if (
+      this.contains === CellContent.EMPTY ||
+      this.contains === CellContent.POTION
+    ) {
       // all branches from here are revealed
       this.setFillStyle(0xffffff);
       const bounds = this.getBounds(); // Get world bounds of the cell
@@ -101,7 +109,25 @@ class Cell extends Phaser.GameObjects.Rectangle {
         bounds.centerY,
         this.imageName + "_tan"
       );
-      if (this.adjacentMines > 0) {
+      if (this.contains === CellContent.POTION) {
+        if (!this.textOfCell) {
+          this.textOfCell = this.scene.add.text(
+            bounds.centerX, // World X position
+            bounds.centerY, // World Y position
+            "P",
+            {
+              fontSize: "20px",
+              color: "#0000FF",
+            }
+          );
+          this.textOfCell.setOrigin(0.5); // Center the text inside the cell
+          this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
+        } else {
+          this.textOfCell.setText("P");
+          this.textOfCell.setColor("#0000FF");
+          this.textOfCell.setAbove(this.image);
+        }
+      } else if (this.adjacentMines > 0) {
         //todo: bug here (I think). If already-revealed cell is updated, the number disapears. I *think* the if block below fails and so the text is not updated, leading to it being behind the cell's image.
         if (!this.textOfCell) {
           this.textOfCell = this.scene.add.text(
@@ -117,11 +143,13 @@ class Cell extends Phaser.GameObjects.Rectangle {
           this.textOfCell.setOrigin(0.5); // Center the text inside the cell
           this.scene.add.existing(this.textOfCell); // Ensure it's added to the scene
         } else {
+          this.textOfCell.setText(this.adjacentMines.toString());
+          this.textOfCell.setColor("#000000");
           this.textOfCell.setAbove(this.image);
         }
+      } else if (this.textOfCell) {
+        this.textOfCell.setText("");
       }
-    } else if (this.contains === CellContent.HAZARD) {
-      this.setFillStyle(0xff0000);
     }
   }
 
@@ -145,7 +173,7 @@ export enum CellState {
 export enum CellContent {
   EMPTY,
   HAZARD,
-  TREASURE,
+  POTION,
   WALL,
   EXIT,
 }

@@ -1,4 +1,5 @@
 import GameBoard, { Compass } from "./GameBoard";
+import { Player } from "./Player";
 
 class Level {
   board: GameBoard;
@@ -6,6 +7,7 @@ class Level {
   points: number;
   hasWon: boolean;
   levelDifficulty: number[];
+  player: Player;
 
   constructor(
     scene: Phaser.Scene,

@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import Level from "../models/Level";
-import { Player } from "../models/Player";
+import ShopBoard from "../models/ShopBoard";
 
 class GameScene extends Phaser.Scene {
   private level: Level;
-  private player: Player;
+  private shop: ShopBoard;
   gameEndText: Phaser.GameObjects.Text;
   gameOver: boolean = false;
 
@@ -20,9 +20,10 @@ class GameScene extends Phaser.Scene {
   barX!: number;
   barY!: number;
   countdownEvent!: Phaser.Time.TimerEvent;
+  CELL_SIZE: number = 32; // Size of each cell in pixels
 
   modeText!: Phaser.GameObjects.Text;
-  basicDifficulty = [0, 0, 0]; // size, time, mine density
+  basicDifficulty = [0, 0, 0.15]; // size, time, mine density
 
   private keydownListener: (event: KeyboardEvent) => void;
 
@@ -32,7 +33,7 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.resetLevel();
-
+    // this.enterShop();
     this.events.on("gameOver", () => {
       this.gameOver = true;
       this.stopTimer();
@@ -75,12 +76,82 @@ class GameScene extends Phaser.Scene {
       this.gameEndText.setOrigin(0.5);
       this.keydownListener = (event: KeyboardEvent) => {
         if (event.key === "n" || event.key === "N") {
-          this.basicDifficulty[0] += 1; // todo: make difficulty increase random
-          this.nextLevel();
+          this.enterShop();
+          // this.nextLevel();
         }
       };
       this.input.keyboard?.on("keydown", this.keydownListener);
     });
+
+    this.events.on("nextLevel", (isRightExit: boolean) => {
+      if (isRightExit) {
+        console.log("Increase Mine Density");
+        this.basicDifficulty[2] += 0.05;
+      } else {
+        console.log("Increase Board Size");
+        this.basicDifficulty[0] += 1;
+      }
+      this.nextLevel();
+    });
+  }
+
+  enterShop() {
+    this.gameOver = false;
+
+    // Clear all existing game objects
+    this.children.removeAll();
+
+    // Destroy specific objects if they exist
+    if (this.level) {
+      this.level.board.destroy();
+    }
+    if (this.shop) {
+      this.shop.destroy();
+    }
+    if (this.gameEndText) {
+      this.gameEndText.destroy();
+    }
+    if (this.timerBar) {
+      this.timerBar.destroy();
+    }
+    if (this.outlineBar) {
+      this.outlineBar.destroy();
+    }
+    if (this.countdownEvent) {
+      this.countdownEvent.remove();
+    }
+
+    // Remove any event listeners
+    this.input.keyboard?.removeAllListeners();
+
+    const boardWidth = 20;
+    this.add.image(0, 0, "dirt").setOrigin(0, 0);
+
+    const x =
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
+    const y =
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
+
+    // Destroy existing shop board if it exists
+    if (this.shop) {
+      this.shop.destroy();
+    }
+
+    // Create new shop board
+    this.shop = new ShopBoard(
+      this,
+      x,
+      y,
+      boardWidth,
+      boardWidth,
+      this.CELL_SIZE,
+      this.CELL_SIZE
+    );
+
+    // Add the shop board to the scene
+    this.add.existing(this.shop);
   }
 
   resetLevel() {
@@ -103,26 +174,25 @@ class GameScene extends Phaser.Scene {
     }
 
     // Create new Level
-    const cellSize = 32;
     const boardWidth = 20;
 
     this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
-      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
     const y =
-      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
-    this.player = new Player(3, 5, []);
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
     this.level = new Level(
       this,
       x,
       y,
       boardWidth,
       boardWidth,
-      cellSize,
-      cellSize,
-      0,
-      this.player
+      this.CELL_SIZE,
+      this.CELL_SIZE,
+      this.basicDifficulty
     );
     this.add.existing(this.level.board);
     this.level.startLevel();
@@ -181,29 +251,30 @@ class GameScene extends Phaser.Scene {
   }
 
   nextLevel() {
-    this.gameOver = false;
-    if (this.level) {
-      this.level.board.destroy();
-    }
+    // this.gameOver = false;
+    // if (this.level) {
+    //   this.level.board.destroy();
+    // }
 
-    // Remove other game objects
-    if (this.gameEndText) {
-      this.gameEndText.destroy();
-    }
+    // // Remove other game objects
+    // if (this.gameEndText) {
+    //   this.gameEndText.destroy();
+    // }
 
-    // Remove the event listener
-    this.input.keyboard?.off("keydown", this.keydownListener);
+    // // Remove the event listener
+    // this.input.keyboard?.off("keydown", this.keydownListener);
 
     // Create new Level
-    const cellSize = 32;
     const boardWidth = 20 + this.basicDifficulty[0];
 
     this.add.image(0, 0, "dirt").setOrigin(0, 0);
 
     const x =
-      (this.game.config.width as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.width as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
     const y =
-      (this.game.config.height as number) / 2 - cellSize * (boardWidth / 2);
+      (this.game.config.height as number) / 2 -
+      this.CELL_SIZE * (boardWidth / 2);
 
     this.level = new Level(
       this,
@@ -211,10 +282,9 @@ class GameScene extends Phaser.Scene {
       y,
       boardWidth,
       boardWidth,
-      cellSize,
-      cellSize,
-      0,
-      this.player
+      this.CELL_SIZE,
+      this.CELL_SIZE,
+      this.basicDifficulty
     );
     this.add.existing(this.level.board);
     this.level.startLevel();

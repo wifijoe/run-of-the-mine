@@ -1,16 +1,19 @@
+import Board from "./Board";
 import GameScene from "../scenes/GameScene";
 import Cell, { CellContent, CellState } from "./Cell";
 import { Player } from "./Player";
 
-class GameBoard extends Phaser.GameObjects.Container {
+class GameBoard extends Board {
+  /* Properties from Board.ts
   grid: Cell[][];
-  numberOfMines: number;
-  cellWidth: number;
-  cellHeight: number;
   boardWidth: number;
   boardHeight: number;
-  gameOver: boolean = false;
+  cellWidth: number;
+  cellHeight: number;
   playerPosition: [number, number];
+  */
+  numberOfMines: number;
+  gameOver: boolean = false;
   entranceDirection: Compass;
   player: Player;
   constructor(
@@ -22,9 +25,9 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellWidth: number,
     cellHeight: number,
     entranceDirection: Compass,
-    player: Player
+    mineDensity: number = 0.15
   ) {
-    super(scene, x, y);
+    super(scene, x, y, width, height, cellWidth, cellHeight);
     this.grid = [];
     this.numberOfMines = 0;
     this.cellWidth = cellWidth;
@@ -33,9 +36,18 @@ class GameBoard extends Phaser.GameObjects.Container {
     this.boardHeight = height;
     this.width = width;
     this.height = height;
-    this.player = player;
+
+    console.log("boardWidth: ", this.boardWidth);
+    console.log("mineDensity: ", mineDensity);
     //todo: put the player in the revealed space by the entrance of the board
-    this.generateBoard(cellWidth, cellHeight, width, height, entranceDirection);
+    this.generateBoard(
+      cellWidth,
+      cellHeight,
+      width,
+      height,
+      entranceDirection,
+      mineDensity
+    );
 
     this.setSize(width * cellWidth, height * cellHeight);
 
@@ -50,7 +62,8 @@ class GameBoard extends Phaser.GameObjects.Container {
     cellHeight: number,
     width: number,
     height: number,
-    entranceDirection: Compass
+    entranceDirection: Compass,
+    mineDensity: number = 0.15
   ) {
     this.entranceDirection = entranceDirection;
     //randomly select four points for the exits/entrance
@@ -152,7 +165,7 @@ class GameBoard extends Phaser.GameObjects.Container {
     }
     // Place mines, avoiding the edge tiles
     this.playerPosition = [startX!, startY!];
-    this.placeMines(startX!, startY!, 0.15);
+    this.placeMines(startX!, startY!, mineDensity);
     this.calculateAdjacentMines();
     //  this.revealCell(startX, startY); this breaks for reasons inexplicable to me
   }
@@ -232,7 +245,11 @@ class GameBoard extends Phaser.GameObjects.Container {
       return;
     }
     const cell = this.grid[x][y];
-    if (cell.cellState === CellState.REVEALED) {
+    if (
+      cell.cellState === CellState.REVEALED ||
+      cell.contains === CellContent.WALL ||
+      cell.contains === CellContent.EXIT
+    ) {
       return;
     }
     cell.cellState = CellState.REVEALED;
@@ -267,6 +284,41 @@ class GameBoard extends Phaser.GameObjects.Container {
     if (cell.cellState === CellState.HIDDEN) {
       cell.cellState = CellState.VISIBLE;
       cell.updateAppearance();
+    }
+  }
+
+  clickCell(cell: Cell, pointer: Phaser.Input.Pointer) {
+    if (pointer.button === 0) {
+      if (
+        cell.cellState != CellState.HIDDEN &&
+        cell.cellState != CellState.FLAGGED
+      ) {
+        // hidden cells are unclickable
+        if (cell.contains === CellContent.WALL) {
+          return; // Don't do anything if the cell is a wall
+        } else if (cell.contains === CellContent.EXIT) {
+          // this.scene.updateScore(100);
+          this.winLevel();
+          return;
+        } else if (cell.contains === CellContent.HAZARD) {
+          cell.cellState = CellState.REVEALED;
+          this.loseGame();
+        } else {
+          // this.scene.updateScore(10);
+          this.revealCell(cell.getGridX(), cell.getGridY());
+        }
+      }
+    } else if (pointer.button === 2) {
+      if (cell.cellState == CellState.FLAGGED) {
+        cell.cellState = CellState.HIDDEN;
+      } else if (
+        cell.cellState == CellState.VISIBLE ||
+        cell.cellState == CellState.HIDDEN
+      ) {
+        cell.cellState = CellState.FLAGGED;
+      } else if (cell.cellState == CellState.REVEALED) {
+        //todo: place a bomb
+      }
     }
   }
 

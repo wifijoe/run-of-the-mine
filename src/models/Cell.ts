@@ -1,12 +1,12 @@
 import GameScene from "../scenes/GameScene";
-import GameBoard from "./GameBoard";
+import Board from "./Board";
 
 class Cell extends Phaser.GameObjects.Rectangle {
   cellState: CellState;
   contains: CellContent;
   adjacentMines: number;
   textOfCell: Phaser.GameObjects.Text;
-  board: GameBoard;
+  board: Board;
   gameScene: GameScene;
   image: Phaser.GameObjects.Image;
   imageName: string;
@@ -21,15 +21,16 @@ class Cell extends Phaser.GameObjects.Rectangle {
     width: number,
     height: number,
     contains: CellContent,
-    board: GameBoard,
-    gameScene: GameScene
+    board: Board,
+    gameScene: GameScene,
+    cellState: CellState = CellState.HIDDEN
   ) {
     super(scene, x, y, width, height);
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
-    this.cellState = CellState.HIDDEN;
+    this.cellState = cellState;
     this.contains = contains;
     this.adjacentMines = 0;
     this.board = board;
@@ -55,47 +56,7 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
     // Add an event listener to detect clicks on this cell
     this.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.button === 0) {
-        if (
-          this.cellState != CellState.HIDDEN &&
-          this.cellState != CellState.FLAGGED
-        ) {
-          // hidden cells are unclickable
-          if (this.contains === CellContent.WALL) {
-            return; // Don't do anything if the cell is a wall
-          } else if (this.contains === CellContent.EXIT) {
-            gameScene.updateScore(100);
-            board.winLevel();
-            return;
-          } else if (this.contains === CellContent.HAZARD) {
-            this.cellState = CellState.REVEALED;
-            if (this.board.player.harm()) {
-              //damages and returns true if dead
-              board.loseGame();
-            }
-            this.updateAppearance();
-          } else if (this.contains === CellContent.POTION) {
-            this.board.player.heal();
-            this.contains = CellContent.EMPTY;
-            this.updateAppearance;
-          } else {
-            gameScene.updateScore(10);
-            this.board.revealCell(this.getGridX(), this.getGridY());
-          }
-        }
-      } else if (pointer.button === 2) {
-        if (this.cellState == CellState.FLAGGED) {
-          this.cellState = CellState.HIDDEN;
-        } else if (
-          this.cellState == CellState.VISIBLE ||
-          this.cellState == CellState.HIDDEN
-        ) {
-          this.cellState = CellState.FLAGGED;
-        } else if (this.cellState == CellState.REVEALED) {
-          //todo: place a bomb
-        }
-      }
-
+      board.clickCell(this, pointer);
       this.update();
     });
   }

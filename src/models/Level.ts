@@ -6,7 +6,7 @@ class Level {
   timePlayed: number;
   points: number;
   hasWon: boolean;
-  levelDifficulty: number;
+  levelDifficulty: number[];
   player: Player;
 
   constructor(
@@ -17,10 +17,9 @@ class Level {
     height: number,
     cellWidth: number,
     cellHeight: number,
-    levelDifficulty: number,
-    player: Player
+    levelDifficulty: number[]
   ) {
-    this.player = player;
+    console.log("levelDifficulty: ", levelDifficulty);
     this.board = new GameBoard(
       scene,
       x,
@@ -30,7 +29,7 @@ class Level {
       cellWidth,
       cellHeight,
       Compass.SOUTH,
-      this.player
+      levelDifficulty[2]
     );
     this.timePlayed = 0;
     this.points = 0;

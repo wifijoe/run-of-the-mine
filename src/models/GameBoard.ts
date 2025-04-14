@@ -368,7 +368,17 @@ class GameBoard extends Board {
   }
 
   revealStart() {
+    this.loadCell();
     this.revealCell(this.playerPosition[0], this.playerPosition[1]);
+  }
+
+  loadCell() {
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        const cell = this.grid[i][j];
+        cell.updateAppearance();
+      }
+    }
   }
 
   movePlayer(x: number, y: number) {

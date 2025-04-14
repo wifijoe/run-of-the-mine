@@ -61,28 +61,16 @@ class ShopBoard extends Board {
   }
 
   revealStart() {
-    this.revealCell(0, 0);
+    this.loadCell();
   }
 
-  revealCell(x: number, y: number) {
-    // Check to make sure x and y are valid
-    if (x < 0 || x >= this.boardWidth || y < 0 || y >= this.boardHeight) {
-      return;
+  loadCell() {
+    for (let i = 0; i < this.boardWidth; i++) {
+      for (let j = 0; j < this.boardHeight; j++) {
+        const cell = this.grid[i][j];
+        cell.updateAppearance();
+      }
     }
-    const cell = this.grid[x][y];
-    if (cell.cellState === CellState.REVEALED) {
-      return;
-    }
-    cell.cellState = CellState.REVEALED;
-    cell.updateAppearance();
-    this.revealCell(x - 1, y);
-    this.revealCell(x + 1, y);
-    this.revealCell(x, y - 1);
-    this.revealCell(x, y + 1);
-    this.revealCell(x - 1, y - 1);
-    this.revealCell(x - 1, y + 1);
-    this.revealCell(x + 1, y - 1);
-    this.revealCell(x + 1, y + 1);
   }
 
   loseGame(): void {
@@ -138,7 +126,7 @@ class ShopBoard extends Board {
           cellContent,
           this,
           this.scene as GameScene,
-          CellState.HIDDEN
+          CellState.REVEALED
         );
 
         this.grid[i][j] = cell;

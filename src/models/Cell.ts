@@ -42,7 +42,6 @@ class Cell extends Phaser.GameObjects.Rectangle {
     if (random < 0.5) {
       this.imageName = "speckled";
     }
-    this.updateAppearance();
 
     // this.setStrokeStyle(1, 0x000000);
     // Black border for all cells
@@ -62,12 +61,20 @@ class Cell extends Phaser.GameObjects.Rectangle {
 
   updateAppearance() {
     const bounds = this.getBounds(); // Get world bounds of the cell
-
     if (this.cellState === CellState.HIDDEN) {
-      this.setFillStyle(0x808080); // Grey for hidden cells
+      const iName = "fog_" + Math.floor(Math.random() * 4);
+      this.image = this.scene.add.image(
+        bounds.centerX, 
+        bounds.centerY,
+        iName
+      );
     } else if (this.cellState === CellState.VISIBLE) {
       if (this.contains === CellContent.WALL) {
-        this.setFillStyle(0x000000); // Black          // matter for walls or exit
+        this.image = this.scene.add.image(
+          bounds.centerX, 
+          bounds.centerY, 
+          "wall"
+        );
       } else if (this.contains === CellContent.EXIT) {
         this.image = this.scene.add.image(
           bounds.centerX,
@@ -90,9 +97,12 @@ class Cell extends Phaser.GameObjects.Rectangle {
       );
 
     } else if (this.cellState == CellState.REVEALED) {
-
       if (this.contains === CellContent.WALL) {
-        this.setFillStyle(0x000000); // Black          // matter for walls or exit
+        this.image = this.scene.add.image(
+          bounds.centerX, 
+          bounds.centerY, 
+          "wall"
+        );         // matter for walls or exit
       } else if (this.contains === CellContent.EXIT) {
         this.image = this.scene.add.image(
           bounds.centerX,

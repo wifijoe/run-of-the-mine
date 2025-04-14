@@ -33,9 +33,14 @@ export class Preloader extends Scene {
     });
 
     this.load.image("flag", "tiles/flag.png");
-    this.load.image("mine", "tiles/mine.png");
+    this.load.image("mine", "tiles/bomb.png");
 
     // Attribution: "Designed by 0melapics / Freepik"
+    this.load.image("fog_0", "tiles/fog_1.png");
+    this.load.image("fog_1", "tiles/fog_2.png");
+    this.load.image("fog_2", "tiles/fog_3.png");
+    this.load.image("fog_3", "tiles/fog_4.png");
+    this.load.image("wall", "tiles/wall.png");
     this.load.image("dirt", "dirt.jpg");
     this.load.image("exit", "tiles/exit.png");
     this.load.image("blank_brown", "tiles/blank_brown.png");

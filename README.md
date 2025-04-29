@@ -1,4 +1,8 @@
-# Phaser Vite TypeScript Template
+# Run of the Mine
+This is a rogue-like minesweeper game. The farther you progress, the harder the game gets. Currently most of the powerups/curses are not finished, but the base game is complete
+
+### Demo
+[Play the game here!](https://run-of-the-mines.missinginfo.me/)
 
 ### Ash added thoughts
 Most of this information is good to know, but I will be handling `npm run build` automatically and will likely have this set up in the next few weeks. Don't worry about building things for now. Phaser documentation can be found at [this site](https://docs.phaser.io/phaser/getting-started/what-is-phaser). All of the documentation is currently relevant, though it is in javascript, so there will be some small code differences. I will be working on getting the jest framework ready to go and figure out the best way to set up testing during that time also.
